@@ -1,0 +1,60 @@
+name: Build iOS IPA (unsigned)
+
+on:
+  push:
+    branches: [ main, master ]
+    tags: [ 'v*' ]
+  workflow_dispatch:
+
+jobs:
+  build-ios:
+    runs-on: macos-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.5'
+          channel: 'stable'
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build iOS (unsigned)
+        run: |
+          flutter build ios --release --no-codesign
+
+      - name: Package IPA
+        run: |
+          PAYLOAD_DIR="${{ github.workspace }}/build/ipa_payload"
+          IPA_PATH="${{ github.workspace }}/build/PixelVerse_v3.0.0_unsigned.ipa"
+          mkdir -p "$PAYLOAD_DIR/Payload"
+          cp -R "${{ github.workspace }}/build/ios/iphoneos/Runner.app" "$PAYLOAD_DIR/Payload/"
+          # Remove code signatures
+          rm -rf "$PAYLOAD_DIR/Payload/Runner.app/_CodeSignature"
+          rm -rf "$PAYLOAD_DIR/Payload/Runner.app/Frameworks/App.framework/_CodeSignature"
+          rm -rf "$PAYLOAD_DIR/Payload/Runner.app/Frameworks/Flutter.framework/_CodeSignature"
+          rm -f "$PAYLOAD_DIR/Payload/Runner.app/embedded.mobileprovision"
+          # Zip into IPA
+          cd "$PAYLOAD_DIR"
+          zip -r "$IPA_PATH" Payload/
+          echo "IPA_PATH=$IPA_PATH" >> $GITHUB_ENV
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: PixelVerse_unsigned_ipa
+          path: ${{ env.IPA_PATH }}
+          retention-days: 30
+
+      - name: Upload Flutter Web build (bonus)
+        run: flutter build web --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PixelVerse_web
+          path: build/web
+          retention-days: 30
