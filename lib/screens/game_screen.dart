@@ -31,7 +31,7 @@ class GameScreen extends StatefulWidget {
 class _GameScreenState extends State<GameScreen> {
   late final GameState _gameState;
   late final PixelVerseGame _game;
-  bool _gameReady = false;
+  bool _gameInitialized = false;
 
   // Overlay states
   bool _showInventory = false;
@@ -91,7 +91,7 @@ class _GameScreenState extends State<GameScreen> {
 
     if (mounted) {
       setState(() {
-        _gameReady = true;
+        _gameInitialized = true;
       });
     }
   }
@@ -253,7 +253,7 @@ class _GameScreenState extends State<GameScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (!_gameReady) {
+    if (!_gameInitialized) {
       return const Scaffold(
         backgroundColor: Colors.black,
         body: Center(
@@ -262,7 +262,7 @@ class _GameScreenState extends State<GameScreen> {
             children: [
               CircularProgressIndicator(color: Colors.white),
               SizedBox(height: 16),
-              Text('正在加载像素谷...',
+              Text('正在初始化...',
                   style: TextStyle(color: Colors.white)),
             ],
           ),
@@ -277,8 +277,56 @@ class _GameScreenState extends State<GameScreen> {
         onKey: _handleKey,
         child: Stack(
           children: [
-            // Flame game
-            GameWidget(game: _game),
+            // Flame game with loading builder (waits for onLoad)
+            GameWidget(
+              game: _game,
+              loadingBuilder: (_) => Scaffold(
+                backgroundColor: const Color(0xFF1a237e),
+                body: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const CircularProgressIndicator(color: Colors.white),
+                      const SizedBox(height: 16),
+                      const Text(
+                        '正在加载像素谷...',
+                        style: TextStyle(color: Colors.white, fontSize: 18),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '正在加载资源和世界地图',
+                        style: TextStyle(color: Colors.white70, fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              errorBuilder: (context, error) => Scaffold(
+                backgroundColor: Colors.red[900],
+                body: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.error_outline, color: Colors.white, size: 48),
+                        const SizedBox(height: 16),
+                        const Text(
+                          '游戏加载出错',
+                          style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          error.toString(),
+                          style: const TextStyle(color: Colors.white70, fontSize: 12),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
 
             // HUD (only when no overlay is open)
             if (!_anyOverlayOpen)

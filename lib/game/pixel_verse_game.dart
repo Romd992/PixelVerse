@@ -91,9 +91,9 @@ class PixelVerseGame extends FlameGame with HasCollisionDetection {
 
   @override
   Future<void> onLoad() async {
-    await _loadAllSprites();
+    print('[PixelVerse] onLoad started');
 
-    // Create world and camera
+    // Create world and camera FIRST (before any sprite loading)
     _world = World();
     add(_world);
 
@@ -117,42 +117,81 @@ class PixelVerseGame extends FlameGame with HasCollisionDetection {
     );
     add(_colorFilter);
 
-    // Load the farm scene
-    await _loadFarmScene();
+    // Load sprites with try/catch - failures are non-fatal
+    try {
+      await _loadAllSprites();
+      print('[PixelVerse] Sprites loaded successfully (${playerAnimations.length} player anims)');
+    } catch (e) {
+      print('[PixelVerse] WARNING: Sprite loading failed: $e');
+      print('[PixelVerse] Continuing with fallback rendering');
+    }
 
-    // Create player
-    player = PlayerComponent(
-      gameState: gameState,
-      animations: playerAnimations,
-      shadowSprite: shadowSprite,
-    );
-    player!.onAction = _handlePlayerAction;
-    player!.onDamaged = () {
-      onStateChanged?.call();
-      if (gameState.health <= 0) {
-        CombatSystem.respawnPlayer(gameState);
-        player!.position = Vector2(gameState.playerX, gameState.playerY);
-        if (gameState.scene == GameScene.mine) {
-          exitMine();
-        }
-        onPlayerDeath?.call();
+    // Load the farm scene with try/catch
+    try {
+      await _loadFarmScene();
+      print('[PixelVerse] Farm scene loaded');
+    } catch (e) {
+      print('[PixelVerse] WARNING: Farm scene load failed: $e');
+      // Create a minimal world map with fallback colors
+      try {
+        worldMap = WorldMap(gameState: gameState, isMine: false);
+        worldMap!.generateFarmMap();
+        _world.add(worldMap!);
+        print('[PixelVerse] Created fallback world map');
+      } catch (e2) {
+        print('[PixelVerse] CRITICAL: Fallback world map failed: $e2');
       }
-    };
-    _world.add(player!);
-    _cameraTarget = player!.position.clone();
-    _camera.viewfinder.position = _cameraTarget.clone();
+    }
+
+    // Create player (always, even if animations failed - fallback will render)
+    try {
+      player = PlayerComponent(
+        gameState: gameState,
+        animations: playerAnimations,
+        shadowSprite: shadowSprite,
+      );
+      player!.onAction = _handlePlayerAction;
+      player!.onDamaged = () {
+        onStateChanged?.call();
+        if (gameState.health <= 0) {
+          CombatSystem.respawnPlayer(gameState);
+          player!.position = Vector2(gameState.playerX, gameState.playerY);
+          if (gameState.scene == GameScene.mine) {
+            exitMine();
+          }
+          onPlayerDeath?.call();
+        }
+      };
+      player!.priority = 10;
+      _world.add(player!);
+      _cameraTarget = player!.position.clone();
+      _camera.viewfinder.position = _cameraTarget.clone();
+      print('[PixelVerse] Player created at ${player!.position}');
+    } catch (e) {
+      print('[PixelVerse] CRITICAL: Player creation failed: $e');
+    }
 
     // Load crops from save
-    _rebuildCropComponents();
+    try {
+      _rebuildCropComponents();
+    } catch (e) {
+      print('[PixelVerse] WARNING: Crop rebuild failed: $e');
+    }
 
     // Load placed objects from save
-    _rebuildPlacedObjects();
+    try {
+      _rebuildPlacedObjects();
+    } catch (e) {
+      print('[PixelVerse] WARNING: Placed objects rebuild failed: $e');
+    }
 
     // Set up time system callbacks
     timeSystem.onDayStart = () {
       _rebuildCropComponents();
       onStateChanged?.call();
     };
+
+    print('[PixelVerse] onLoad complete! Player=${player != null}, WorldMap=${worldMap != null}');
   }
 
   Future<void> _loadAllSprites() async {
@@ -380,6 +419,7 @@ class PixelVerseGame extends FlameGame with HasCollisionDetection {
     }
 
     worldMap!.generateFarmMap();
+    worldMap!.priority = 0;
     _world.add(worldMap!);
 
     // Place buildings
@@ -517,6 +557,7 @@ class PixelVerseGame extends FlameGame with HasCollisionDetection {
       interactive: interactive,
       label: label,
     );
+    obj.priority = 5;
     _world.add(obj);
     worldObjects.add(obj);
     return obj;
@@ -537,6 +578,7 @@ class PixelVerseGame extends FlameGame with HasCollisionDetection {
         onOpenDialog?.call(n);
       }
     };
+    npc.priority = 8;
     _world.add(npc);
     npcs.add(npc);
   }
