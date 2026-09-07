@@ -24,28 +24,49 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Build iOS IPA (unsigned, release)
+      - name: Build iOS archive (no codesign)
         run: |
           flutter build ipa --release --no-codesign --verbose
         env:
-          # Ensure no code signing is attempted
           CODE_SIGNING_ALLOWED: NO
           CODE_SIGNING_REQUIRED: NO
           CODE_SIGN_IDENTITY: ""
           PROVISIONING_PROFILE: ""
 
-      - name: List build outputs
+      - name: Package IPA from xcarchive
         run: |
-          echo "=== build/ios/ipa ==="
-          ls -la build/ios/ipa/ 2>/dev/null || echo "No ipa dir"
-          echo "=== build/ios ==="
-          find build/ios -name "*.ipa" -o -name "*.app" 2>/dev/null | head -20
+          set -e
+          XCARCHIVE=$(find build/ios/archive -name "*.xcarchive" -type d | head -1)
+          echo "xcarchive: $XCARCHIVE"
+          if [ -z "$XCARCHIVE" ]; then
+            echo "ERROR: No xcarchive found!"
+            find build/ios -type d | head -20
+            exit 1
+          fi
+          APP_PATH="$XCARCHIVE/Products/Applications/Runner.app"
+          echo "App path: $APP_PATH"
+          ls -la "$APP_PATH"
+          IPA_DIR="${{ github.workspace }}/build/ipa_payload"
+          rm -rf "$IPA_DIR"
+          mkdir -p "$IPA_DIR/Payload"
+          cp -R "$APP_PATH" "$IPA_DIR/Payload/"
+          rm -rf "$IPA_DIR/Payload/Runner.app/_CodeSignature"
+          rm -rf "$IPA_DIR/Payload/Runner.app/Frameworks/App.framework/_CodeSignature" 2>/dev/null || true
+          rm -rf "$IPA_DIR/Payload/Runner.app/Frameworks/Flutter.framework/_CodeSignature" 2>/dev/null || true
+          rm -f "$IPA_DIR/Payload/Runner.app/embedded.mobileprovision"
+          IPA_PATH="${{ github.workspace }}/build/PixelVerse_v3.0.0_unsigned.ipa"
+          cd "$IPA_DIR"
+          zip -r "$IPA_PATH" Payload/
+          cd "${{ github.workspace }}"
+          echo "IPA created: $IPA_PATH"
+          ls -la "$IPA_PATH"
+          echo "IPA_PATH=$IPA_PATH" >> $GITHUB_ENV
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
         with:
           name: PixelVerse_unsigned_ipa
-          path: build/ios/ipa/*.ipa
+          path: ${{ env.IPA_PATH }}
           retention-days: 30
 
       - name: Build Web (bonus)
