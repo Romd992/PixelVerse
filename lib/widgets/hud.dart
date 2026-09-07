@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/game_state.dart';
 import '../models/item.dart';
 import 'pixel_ui.dart';
+import 'item_icon.dart';
 
 /// The heads-up display: health, energy, coins, time, hotbar.
 class Hud extends StatelessWidget {
@@ -260,7 +261,7 @@ class Hud extends StatelessWidget {
                   : Stack(
                       children: [
                         Center(
-                          child: _buildItemIcon(slot.itemId),
+                          child: ItemIcon(itemId: slot.itemId, size: 32),
                         ),
                         if (slot.count > 1)
                           Positioned(
@@ -282,44 +283,5 @@ class Hud extends StatelessWidget {
         }),
       ),
     );
-  }
-
-  Widget _buildItemIcon(int itemId) {
-    // Use emoji/colored container as fallback since we can't easily
-    // render the items.png sprite sheet in a widget
-    final def = Items.getById(itemId);
-    IconData icon;
-    Color color;
-    switch (def.category) {
-      case ItemCategory.tool:
-        icon = Icons.build;
-        color = Colors.grey;
-        break;
-      case ItemCategory.resource:
-        icon = Icons.forest;
-        color = Colors.brown;
-        break;
-      case ItemCategory.seed:
-        icon = Icons.eco;
-        color = Colors.green;
-        break;
-      case ItemCategory.crop:
-        icon = Icons.grass;
-        color = Colors.lightGreen;
-        break;
-      case ItemCategory.food:
-        icon = Icons.restaurant;
-        color = Colors.orange;
-        break;
-      case ItemCategory.material:
-        icon = Icons.inventory_2;
-        color = Colors.amber;
-        break;
-      case ItemCategory.misc:
-        icon = Icons.star;
-        color = Colors.cyan;
-        break;
-    }
-    return Icon(icon, color: color, size: 24);
   }
 }

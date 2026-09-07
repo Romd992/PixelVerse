@@ -37,7 +37,7 @@ class GatheringSystem {
   /// Perform gathering on an object. Returns dropped items.
   static GatheringResult gather(GameState state, String objectType) {
     if (!canGather(state, objectType)) {
-      return const GatheringResult(success: false, message: 'Cannot gather');
+      return const GatheringResult(success: false, message: '无法采集');
     }
 
     state.energy -= 5;
@@ -85,11 +85,11 @@ class GatheringSystem {
   /// Mine-specific gathering in the mine (higher ore chance).
   static GatheringResult mineRock(GameState state) {
     if (state.energy < 5) {
-      return const GatheringResult(success: false, message: 'No energy');
+      return const GatheringResult(success: false, message: '体力不足');
     }
     final selected = state.inventory.selectedSlot;
     if (selected.isEmpty || selected.itemId != Items.pickaxe) {
-      return const GatheringResult(success: false, message: 'Need pickaxe');
+      return const GatheringResult(success: false, message: '需要镐子');
     }
 
     state.energy -= 5;

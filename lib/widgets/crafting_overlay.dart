@@ -3,6 +3,7 @@ import '../models/game_state.dart';
 import '../models/item.dart';
 import '../models/recipe.dart';
 import '../systems/crafting_system.dart';
+import 'item_icon.dart';
 
 /// Crafting overlay: shows recipes at workbench/furnace.
 class CraftingOverlay extends StatefulWidget {
@@ -87,7 +88,7 @@ class _CraftingOverlayState extends State<CraftingOverlay> {
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Center(
-                            child: _buildItemIcon(recipe.resultItemId),
+                            child: ItemIcon(itemId: recipe.resultItemId, size: 32),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -150,42 +151,5 @@ class _CraftingOverlayState extends State<CraftingOverlay> {
         ),
       ),
     );
-  }
-
-  Widget _buildItemIcon(int itemId) {
-    final def = Items.getById(itemId);
-    IconData icon;
-    Color color;
-    switch (def.category) {
-      case ItemCategory.tool:
-        icon = Icons.build;
-        color = Colors.grey;
-        break;
-      case ItemCategory.resource:
-        icon = Icons.forest;
-        color = Colors.brown;
-        break;
-      case ItemCategory.seed:
-        icon = Icons.eco;
-        color = Colors.green;
-        break;
-      case ItemCategory.crop:
-        icon = Icons.grass;
-        color = Colors.lightGreen;
-        break;
-      case ItemCategory.food:
-        icon = Icons.restaurant;
-        color = Colors.orange;
-        break;
-      case ItemCategory.material:
-        icon = Icons.inventory_2;
-        color = Colors.amber;
-        break;
-      case ItemCategory.misc:
-        icon = Icons.star;
-        color = Colors.cyan;
-        break;
-    }
-    return Icon(icon, color: color, size: 24);
   }
 }

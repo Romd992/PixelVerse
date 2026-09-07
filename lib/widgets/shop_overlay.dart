@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/game_state.dart';
 import '../models/item.dart';
 import '../models/inventory.dart';
+import 'item_icon.dart';
 
 /// A shop item entry.
 class ShopItem {
@@ -151,7 +152,7 @@ class _ShopOverlayState extends State<ShopOverlay> {
           ),
           child: Row(
             children: [
-              _buildItemIcon(item.itemId),
+              ItemIcon(itemId: item.itemId, size: 32),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -224,7 +225,7 @@ class _ShopOverlayState extends State<ShopOverlay> {
           ),
           child: Row(
             children: [
-              _buildItemIcon(slot.itemId),
+              ItemIcon(itemId: slot.itemId, size: 32),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -256,51 +257,6 @@ class _ShopOverlayState extends State<ShopOverlay> {
           ),
         );
       },
-    );
-  }
-
-  Widget _buildItemIcon(int itemId) {
-    final def = Items.getById(itemId);
-    IconData icon;
-    Color color;
-    switch (def.category) {
-      case ItemCategory.tool:
-        icon = Icons.build;
-        color = Colors.grey;
-        break;
-      case ItemCategory.resource:
-        icon = Icons.forest;
-        color = Colors.brown;
-        break;
-      case ItemCategory.seed:
-        icon = Icons.eco;
-        color = Colors.green;
-        break;
-      case ItemCategory.crop:
-        icon = Icons.grass;
-        color = Colors.lightGreen;
-        break;
-      case ItemCategory.food:
-        icon = Icons.restaurant;
-        color = Colors.orange;
-        break;
-      case ItemCategory.material:
-        icon = Icons.inventory_2;
-        color = Colors.amber;
-        break;
-      case ItemCategory.misc:
-        icon = Icons.star;
-        color = Colors.cyan;
-        break;
-    }
-    return Container(
-      width: 36,
-      height: 36,
-      decoration: BoxDecoration(
-        color: Colors.black38,
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Icon(icon, color: color, size: 20),
     );
   }
 }

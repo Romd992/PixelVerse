@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/game_state.dart';
 import '../models/item.dart';
 import 'pixel_ui.dart';
+import 'item_icon.dart';
 
 /// Full inventory/backpack overlay (4 rows x 8 cols = 32 slots).
 class InventoryOverlay extends StatelessWidget {
@@ -34,7 +35,7 @@ class InventoryOverlay extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Inventory',
+                  '背包',
                   style: PixelUi.outlinedText(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
@@ -102,7 +103,7 @@ class InventoryOverlay extends StatelessWidget {
                 ? null
                 : Stack(
                     children: [
-                      Center(child: _buildItemIcon(slot.itemId)),
+                      Center(child: ItemIcon(itemId: slot.itemId, size: 36)),
                       if (slot.count > 1)
                         Positioned(
                           right: 3,
@@ -156,43 +157,6 @@ class InventoryOverlay extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  Widget _buildItemIcon(int itemId) {
-    final def = Items.getById(itemId);
-    IconData icon;
-    Color color;
-    switch (def.category) {
-      case ItemCategory.tool:
-        icon = Icons.build;
-        color = Colors.grey;
-        break;
-      case ItemCategory.resource:
-        icon = Icons.forest;
-        color = Colors.brown;
-        break;
-      case ItemCategory.seed:
-        icon = Icons.eco;
-        color = Colors.green;
-        break;
-      case ItemCategory.crop:
-        icon = Icons.grass;
-        color = Colors.lightGreen;
-        break;
-      case ItemCategory.food:
-        icon = Icons.restaurant;
-        color = Colors.orange;
-        break;
-      case ItemCategory.material:
-        icon = Icons.inventory_2;
-        color = Colors.amber;
-        break;
-      case ItemCategory.misc:
-        icon = Icons.star;
-        color = Colors.cyan;
-        break;
-    }
-    return Icon(icon, color: color, size: 28);
   }
 
   String _categoryName(ItemCategory cat) {

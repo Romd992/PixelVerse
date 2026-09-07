@@ -126,6 +126,7 @@ class Inventory {
     addItem(Items.pickaxe, 1);
     addItem(Items.hoe, 1);
     addItem(Items.wateringCan, 1);
+    addItem(Items.wood, 5);
     addItem(Items.wheatSeeds, 5);
     addItem(Items.carrotSeeds, 3);
     addItem(Items.potatoSeeds, 3);

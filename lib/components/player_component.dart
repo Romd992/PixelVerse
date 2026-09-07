@@ -332,6 +332,8 @@ class PlayerComponent extends PositionComponent with CollisionCallbacks {
                   ..color = const Color(0xFFFFFFFF).withOpacity(0.8)
                   ..filterQuality = FilterQuality.none,
               );
+        } else {
+          _renderFallback(canvas, const Color(0xFFFFFFFF));
         }
         return;
       }
@@ -353,17 +355,55 @@ class PlayerComponent extends PositionComponent with CollisionCallbacks {
         overridePaint: pixelPaint,
       );
     } else {
-      // Fallback colored rectangle
-      canvas.drawRect(
-        Rect.fromLTWH(
-          (spriteSize - 28) / 2,
-          spriteSize - 36,
-          28,
-          32,
-        ),
-        Paint()..color = const Color(0xFF4A90D9),
-      );
+      _renderFallback(canvas, const Color(0xFF4A90D9));
     }
+  }
+
+  /// Render a visible fallback player shape (blue rectangle + P label).
+  void _renderFallback(Canvas canvas, Color color) {
+    // Body
+    canvas.drawRect(
+      Rect.fromLTWH(
+        (spriteSize - 28) / 2,
+        spriteSize - 38,
+        28,
+        34,
+      ),
+      Paint()..color = color,
+    );
+    // Head
+    canvas.drawRect(
+      Rect.fromLTWH(
+        (spriteSize - 18) / 2,
+        spriteSize - 48,
+        18,
+        14,
+      ),
+      Paint()..color = color.withOpacity(0.9),
+    );
+    // Border
+    canvas.drawRect(
+      Rect.fromLTWH(
+        (spriteSize - 28) / 2,
+        spriteSize - 48,
+        28,
+        44,
+      ),
+      Paint()
+        ..color = const Color(0xFF1A1A2E)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.5,
+    );
+    // "P" label
+    final tp = TextPaint(
+      style: const TextStyle(
+        color: Color(0xFFFFFFFF),
+        fontSize: 12,
+        fontWeight: FontWeight.bold,
+      ),
+    );
+    tp.render(canvas, 'P', Vector2(spriteSize / 2, spriteSize - 24),
+        anchor: Anchor.center);
   }
 
   @override

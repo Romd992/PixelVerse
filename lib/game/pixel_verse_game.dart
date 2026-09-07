@@ -250,7 +250,8 @@ class PixelVerseGame extends FlameGame with HasCollisionDetection {
           sprites.add(sheet.getSprite(row, c));
         }
         return SpriteAnimation.spriteList(sprites, stepTime: stepTime, loop: loop);
-      } catch (_) {
+      } catch (e) {
+        print('[PixelVerse] Failed to load animation row from $file (row=$row, cols=$cols): $e');
         return null;
       }
     }
@@ -266,7 +267,10 @@ class PixelVerseGame extends FlameGame with HasCollisionDetection {
     for (final f in playerFiles) {
       try {
         await images.load(f);
-      } catch (_) {}
+        print('[PixelVerse] Loaded player sprite: $f');
+      } catch (e) {
+        print('[PixelVerse] WARNING: Failed to load player sprite $f: $e');
+      }
     }
 
     // Rows: 0=down, 1=left, 2=right, 3=up

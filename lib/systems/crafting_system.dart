@@ -23,7 +23,7 @@ class CraftingSystem {
   /// Craft a recipe. Deducts materials and adds result.
   static CraftingResult craft(Recipe recipe, GameState state) {
     if (!canCraft(recipe, state)) {
-      return const CraftingResult(success: false, message: 'Missing materials');
+      return const CraftingResult(success: false, message: '材料不足');
     }
 
     // Deduct ingredients
@@ -43,10 +43,10 @@ class CraftingSystem {
         state.inventory.addItem(entry.key, entry.value);
       }
       state.inventory.removeItem(recipe.resultItemId, recipe.resultCount - overflow);
-      return const CraftingResult(success: false, message: 'Inventory full');
+      return const CraftingResult(success: false, message: '背包已满');
     }
 
-    return CraftingResult(success: true, message: 'Crafted ${recipe.name}');
+    return CraftingResult(success: true, message: '制作了${recipe.name}');
   }
 
   /// Get all recipes available at a station, with craftability info.
@@ -63,7 +63,7 @@ class CraftingSystem {
       recipe = Recipes.all.firstWhere((r) => r.id == 'gold_bar');
     }
     if (recipe == null) {
-      return const CraftingResult(success: false, message: 'Cannot smelt this');
+      return const CraftingResult(success: false, message: '无法熔炼此物品');
     }
     return craft(recipe, state);
   }
