@@ -100,6 +100,7 @@ class PixelVerseGame extends FlameGame with HasCollisionDetection {
     _camera = CameraComponent(world: _world);
     _camera.viewfinder.anchor = Anchor.center;
     add(_camera);
+    print('[PixelVerse] CameraComponent created, viewfinder anchor=center');
 
     // Night overlay (in camera viewport, not world)
     _nightOverlay = RectangleComponent(
@@ -164,8 +165,9 @@ class PixelVerseGame extends FlameGame with HasCollisionDetection {
       };
       player!.priority = 10;
       _world.add(player!);
-      _cameraTarget = player!.position.clone();
-      _camera.viewfinder.position = _cameraTarget.clone();
+      // Set initial camera position to player
+      _camera.viewfinder.position = player!.position.clone();
+      print('[PixelVerse] Camera initial pos set to player at ${player!.position}');
       print('[PixelVerse] Player created at ${player!.position}');
     } catch (e) {
       print('[PixelVerse] CRITICAL: Player creation failed: $e');
@@ -191,7 +193,9 @@ class PixelVerseGame extends FlameGame with HasCollisionDetection {
       onStateChanged?.call();
     };
 
-    print('[PixelVerse] onLoad complete! Player=${player != null}, WorldMap=${worldMap != null}');
+    print('[PixelVerse] onLoad complete! Player=${player != null}, WorldMap=${worldMap != null}, '
+        'worldChildren=${_world.children.length}, playerAnims=${playerAnimations.length}, '
+        'npcAnims=${npcAnimations.length}, enemyAnims=${enemyAnimations.length}');
   }
 
   Future<void> _loadAllSprites() async {
@@ -1103,11 +1107,9 @@ class PixelVerseGame extends FlameGame with HasCollisionDetection {
     // Update time
     timeSystem.update(dt);
 
-    // Smooth camera follow
+    // Camera hard-follow player (Flame 1.18.0 compatible)
     if (player != null) {
-      final followSpeed = 1 - pow(0.001, dt).toDouble();
-      _cameraTarget.lerp(player!.position, followSpeed);
-      _camera.viewfinder.position = _cameraTarget.clone();
+      _camera.viewfinder.position = player!.position.clone();
     }
 
     // Update night overlay (smooth darkness)

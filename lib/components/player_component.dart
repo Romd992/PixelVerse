@@ -321,42 +321,15 @@ class PlayerComponent extends PositionComponent with CollisionCallbacks {
     if (_hurtTimer > 0) {
       final flashPhase = (_hurtTimer / hurtFlashInterval).floor();
       if (flashPhase % 2 == 0) {
-        // Render white silhouette instead
         super.render(canvas);
-        if (_currentTicker != null) {
-          _currentTicker!.getSprite().render(
-                canvas,
-                position: Vector2(0, 0),
-                size: Vector2(spriteSize, spriteSize),
-                overridePaint: Paint()
-                  ..color = const Color(0xFFFFFFFF).withOpacity(0.8)
-                  ..filterQuality = FilterQuality.none,
-              );
-        } else {
-          _renderFallback(canvas, const Color(0xFFFFFFFF));
-        }
+        _renderFallback(canvas, const Color(0xFFFFFFFF));
         return;
       }
     }
 
     super.render(canvas);
-    if (_currentTicker != null) {
-      _currentTicker!.getSprite().render(
-            canvas,
-            position: Vector2(0, 0),
-            size: Vector2(spriteSize, spriteSize),
-            overridePaint: pixelPaint,
-          );
-    } else if (_fallbackSprite != null) {
-      _fallbackSprite!.render(
-        canvas,
-        position: Vector2(0, 0),
-        size: Vector2(spriteSize, spriteSize),
-        overridePaint: pixelPaint,
-      );
-    } else {
-      _renderFallback(canvas, const Color(0xFF4A90D9));
-    }
+    // Always use code-drawn fallback (Flame 1.18 + Web CanvasKit sprite issue)
+    _renderFallback(canvas, const Color(0xFF4A90D9));
   }
 
   /// Render a visible fallback player shape (blue rectangle + P label).
@@ -404,6 +377,33 @@ class PlayerComponent extends PositionComponent with CollisionCallbacks {
     );
     tp.render(canvas, 'P', Vector2(spriteSize / 2, spriteSize - 24),
         anchor: Anchor.center);
+
+    // Facing indicator: small arrow showing direction
+    final arrowPaint = Paint()..color = const Color(0xFFFFFF00);
+    final cx = spriteSize / 2;
+    final cy = spriteSize - 24;
+    void tri(Offset p1, Offset p2, Offset p3) {
+      final path = Path()
+        ..moveTo(p1.dx, p1.dy)
+        ..lineTo(p2.dx, p2.dy)
+        ..lineTo(p3.dx, p3.dy)
+        ..close();
+      canvas.drawPath(path, arrowPaint);
+    }
+    switch (_facing) {
+      case Facing.down:
+        tri(Offset(cx, cy + 16), Offset(cx - 4, cy + 10), Offset(cx + 4, cy + 10));
+        break;
+      case Facing.up:
+        tri(Offset(cx, cy - 16), Offset(cx - 4, cy - 10), Offset(cx + 4, cy - 10));
+        break;
+      case Facing.left:
+        tri(Offset(cx - 16, cy), Offset(cx - 10, cy - 4), Offset(cx - 10, cy + 4));
+        break;
+      case Facing.right:
+        tri(Offset(cx + 16, cy), Offset(cx + 10, cy - 4), Offset(cx + 10, cy + 4));
+        break;
+    }
   }
 
   @override

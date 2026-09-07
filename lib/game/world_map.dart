@@ -200,29 +200,16 @@ class WorldMap extends PositionComponent {
   void render(Canvas canvas) {
     super.render(canvas);
 
-    // Determine visible tile range (for culling)
-    // We render all tiles since the camera handles viewport,
-    // but we could cull here for performance.
+    // Render all tiles using code-drawn fallback colors (Flame 1.18 + Web CanvasKit sprite issue)
     for (int y = 0; y < mapHeight; y++) {
       for (int x = 0; x < mapWidth; x++) {
         final tile = getTile(x, y);
-        final sprite = _tileSprites[tile];
         final dx = x * tileSize;
         final dy = y * tileSize;
-
-        if (sprite != null) {
-          sprite.render(
-            canvas,
-            position: Vector2(dx, dy),
-            size: Vector2(tileSize, tileSize),
-          );
-        } else {
-          // Fallback color
-          canvas.drawRect(
-            Rect.fromLTWH(dx, dy, tileSize, tileSize),
-            Paint()..color = _fallbackTileColor(tile),
-          );
-        }
+        canvas.drawRect(
+          Rect.fromLTWH(dx, dy, tileSize, tileSize),
+          Paint()..color = _tileColorWithVariation(tile, x, y),
+        );
       }
     }
 
@@ -287,5 +274,34 @@ class WorldMap extends PositionComponent {
       default:
         return const Color(0xFF4CAF50);
     }
+  }
+
+  /// Get tile color with subtle per-tile variation (grass/dirt/sand only).
+  Color _tileColorWithVariation(int tile, int tx, int ty) {
+    final base = _fallbackTileColor(tile);
+    // Only vary natural tiles
+    if (tile == TileIndices.grass || tile == TileIndices.flower) {
+      // Deterministic pseudo-random based on tile coords
+      final h = (tx * 73856093 ^ ty * 19349663) & 0xFFFF;
+      final variation = (h % 30) - 15; // -15 to +15
+      return _adjustBrightness(base, variation);
+    }
+    if (tile == TileIndices.dirt || tile == TileIndices.sand) {
+      final h = (tx * 83492791 ^ ty * 2971215073) & 0xFFFF;
+      final variation = (h % 20) - 10;
+      return _adjustBrightness(base, variation);
+    }
+    return base;
+  }
+
+  /// Adjust color brightness by delta (-255 to +255).
+  Color _adjustBrightness(Color c, int delta) {
+    int clamp(int v) => v < 0 ? 0 : (v > 255 ? 255 : v);
+    return Color.fromARGB(
+      c.alpha,
+      clamp(c.red + delta),
+      clamp(c.green + delta),
+      clamp(c.blue + delta),
+    );
   }
 }

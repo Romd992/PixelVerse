@@ -213,36 +213,58 @@ class EnemyComponent extends PositionComponent with SolidObject, CollisionCallba
   void render(Canvas canvas) {
     super.render(canvas);
 
-    final paint = _hitFlashTimer > 0
-        ? (Paint()
-          ..color = const Color(0xFFFFFFFF).withOpacity(0.9)
-          ..filterQuality = FilterQuality.none)
-        : pixelPaint;
+    // Always use code-drawn fallback (Flame 1.18 + Web CanvasKit sprite issue)
+    final baseColor = _hitFlashTimer > 0 ? const Color(0xFFFFFFFF) : _fallbackColor();
+    final cx = spriteSize / 2;
+    final cy = spriteSize / 2;
 
-    if (_animTicker != null) {
-      _animTicker!.getSprite().render(
-            canvas,
-            position: Vector2(0, 0),
-            size: Vector2(spriteSize, spriteSize),
-            overridePaint: paint,
-          );
-    } else if (fallbackSprite != null) {
-      fallbackSprite!.render(
-        canvas,
-        position: Vector2(0, 0),
-        size: Vector2(spriteSize, spriteSize),
-        overridePaint: paint,
-      );
-    } else {
-      canvas.drawRect(
-        Rect.fromLTWH(
-          (spriteSize - 28) / 2,
-          spriteSize - 32,
-          28,
-          28,
-        ),
-        Paint()..color = _fallbackColor(),
-      );
+    switch (type) {
+      case EnemyType.slime:
+        // Green blob: semicircle body + eyes
+        canvas.drawOval(
+          Rect.fromLTWH(cx - 16, cy - 4, 32, 24),
+          Paint()..color = baseColor,
+        );
+        canvas.drawCircle(Offset(cx - 6, cy + 2), 3, Paint()..color = const Color(0xFFFFFFFF));
+        canvas.drawCircle(Offset(cx + 6, cy + 2), 3, Paint()..color = const Color(0xFFFFFFFF));
+        canvas.drawCircle(Offset(cx - 6, cy + 2), 1.5, Paint()..color = const Color(0xFF000000));
+        canvas.drawCircle(Offset(cx + 6, cy + 2), 1.5, Paint()..color = const Color(0xFF000000));
+        break;
+      case EnemyType.bat:
+        // Purple bat: body + wings
+        canvas.drawOval(
+          Rect.fromLTWH(cx - 8, cy - 6, 16, 16),
+          Paint()..color = baseColor,
+        );
+        final wingPath = Path()
+          ..moveTo(cx - 8, cy)
+          ..lineTo(cx - 22, cy - 8)
+          ..lineTo(cx - 16, cy + 4)
+          ..close();
+        canvas.drawPath(wingPath, Paint()..color = baseColor);
+        final wingPath2 = Path()
+          ..moveTo(cx + 8, cy)
+          ..lineTo(cx + 22, cy - 8)
+          ..lineTo(cx + 16, cy + 4)
+          ..close();
+        canvas.drawPath(wingPath2, Paint()..color = baseColor);
+        canvas.drawCircle(Offset(cx - 3, cy - 2), 2, Paint()..color = const Color(0xFFFF0000));
+        canvas.drawCircle(Offset(cx + 3, cy - 2), 2, Paint()..color = const Color(0xFFFF0000));
+        break;
+      case EnemyType.skeleton:
+        // White skeleton: skull + body
+        canvas.drawRect(
+          Rect.fromLTWH(cx - 10, cy - 18, 20, 16),
+          Paint()..color = baseColor,
+        );
+        canvas.drawRect(
+          Rect.fromLTWH(cx - 8, cy - 2, 16, 18),
+          Paint()..color = baseColor,
+        );
+        canvas.drawCircle(Offset(cx - 4, cy - 12), 2.5, Paint()..color = const Color(0xFF000000));
+        canvas.drawCircle(Offset(cx + 4, cy - 12), 2.5, Paint()..color = const Color(0xFF000000));
+        canvas.drawRect(Rect.fromLTWH(cx - 3, cy - 6, 6, 2), Paint()..color = const Color(0xFF000000));
+        break;
     }
 
     // Health bar

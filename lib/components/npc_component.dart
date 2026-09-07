@@ -165,31 +165,33 @@ class NpcComponent extends PositionComponent {
   @override
   void render(Canvas canvas) {
     super.render(canvas);
-    if (_walkTicker != null) {
-      _walkTicker!.getSprite().render(
-            canvas,
-            position: Vector2(0, 0),
-            size: Vector2(spriteSize, spriteSize),
-            overridePaint: pixelPaint,
-          );
-    } else if (idleSprite != null) {
-      idleSprite!.render(
-        canvas,
-        position: Vector2(0, 0),
-        size: Vector2(spriteSize, spriteSize),
-        overridePaint: pixelPaint,
-      );
-    } else {
-      canvas.drawRect(
-        Rect.fromLTWH(
-          (spriteSize - 28) / 2,
-          spriteSize - 34,
-          28,
-          30,
-        ),
-        Paint()..color = const Color(0xFF9B59B6),
-      );
-    }
+    // Always use code-drawn fallback (Flame 1.18 + Web CanvasKit sprite issue)
+    // Color by NPC type: mayor=purple, blacksmith=orange, shopkeeper=blue, farmer=green, girl=pink
+    final npcColor = _colorForNpc(def.id);
+    // Body
+    canvas.drawRect(
+      Rect.fromLTWH((spriteSize - 26) / 2, spriteSize - 36, 26, 32),
+      Paint()..color = npcColor,
+    );
+    // Head
+    canvas.drawRect(
+      Rect.fromLTWH((spriteSize - 16) / 2, spriteSize - 46, 16, 12),
+      Paint()..color = const Color(0xFFFFDBAC),
+    );
+    // Border
+    canvas.drawRect(
+      Rect.fromLTWH((spriteSize - 26) / 2, spriteSize - 46, 26, 42),
+      Paint()
+        ..color = const Color(0xFF1A1A2E)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.5,
+    );
+    // First letter of name
+    final tp = TextPaint(
+      style: const TextStyle(color: Color(0xFFFFFFFF), fontSize: 11, fontWeight: FontWeight.bold),
+    );
+    tp.render(canvas, def.name.isNotEmpty ? def.name[0] : '?', Vector2(spriteSize / 2, spriteSize - 20),
+        anchor: Anchor.center);
 
     if (playerNearby) {
       final tp = TextPaint(
@@ -216,5 +218,16 @@ class NpcComponent extends PositionComponent {
     final dy = playerPos.y - position.y;
     playerNearby = dx * dx + dy * dy < range * range;
     return playerNearby;
+  }
+
+  Color _colorForNpc(String id) {
+    switch (id) {
+      case 'mayor': return const Color(0xFF9B59B6); // purple
+      case 'blacksmith': return const Color(0xFFE67E22); // orange
+      case 'shopkeeper': return const Color(0xFF3498DB); // blue
+      case 'farmer': return const Color(0xFF27AE60); // green
+      case 'girl': return const Color(0xFFE91E63); // pink
+      default: return const Color(0xFF95A5A6); // gray
+    }
   }
 }
