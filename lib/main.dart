@@ -1,17 +1,22 @@
 import 'package:flutter/material.dart';
-import 'game/game_screen.dart';
-import 'models/save_manager.dart';
+import 'package:flutter/services.dart';
+import 'screens/title_screen.dart';
 
-/// PixelVerse 应用入口
-///
-/// 初始化 shared_preferences 存档后启动应用。
-Future<void> main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  await SaveManager.init();
+
+  // Lock to landscape orientation on mobile
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.landscapeLeft,
+    DeviceOrientation.landscapeRight,
+  ]);
+
+  // Hide system UI for immersive game
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+
   runApp(const PixelVerseApp());
 }
 
-/// 应用根组件
 class PixelVerseApp extends StatelessWidget {
   const PixelVerseApp({super.key});
 
@@ -21,10 +26,12 @@ class PixelVerseApp extends StatelessWidget {
       title: 'PixelVerse',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.amber),
-        useMaterial3: true,
+        primarySwatch: Colors.brown,
+        brightness: Brightness.dark,
+        scaffoldBackgroundColor: const Color(0xFF1A1A2E),
+        fontFamily: 'monospace',
       ),
-      home: const GameScreen(),
+      home: const TitleScreen(),
     );
   }
 }

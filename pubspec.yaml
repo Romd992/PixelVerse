@@ -1,94 +1,62 @@
 name: pixelverse
-description: "PixelVerse - A pixel-art action adventure game"
+description: "PixelVerse - A pixel-art sandbox survival crafting game (Stardew Valley style)"
 publish_to: 'none'
-version: 3.0.0+1
+version: 1.0.0+1
 
 environment:
   sdk: ^3.5.4
 
-# Dependencies specify other packages that your package needs in order to work.
-# To automatically upgrade your package dependencies to the latest versions
-# consider running `flutter pub upgrade --major-versions`. Alternatively,
-# dependencies can be manually updated by changing the version numbers below to
-# the latest version available on pub.dev. To see which dependencies have newer
-# versions available, run `flutter pub outdated`.
 dependencies:
   flutter:
     sdk: flutter
-
-
-  # The following adds the Cupertino Icons font to your application.
-  # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
+  flame: 1.18.0
   shared_preferences: ^2.3.2
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-
-  # The "flutter_lints" package below contains a set of recommended lints to
-  # encourage good coding practices. The lint set provided by the package is
-  # activated in the `analysis_options.yaml` file located at the root of your
-  # package. See that file for information about deactivating specific lint
-  # rules and activating additional ones.
   flutter_lints: ^4.0.0
 
-# For information on the generic Dart part of this file, see the
-# following page: https://dart.dev/tools/pub/pubspec
-
-# The following section is specific to Flutter packages.
 flutter:
-
-  # The following line ensures that the Material Icons font is
-  # included with your application, so that you can use the icons in
-  # the material Icons class.
   uses-material-design: true
 
   assets:
-    - assets/images/player.png
+    # Player sprites
+    - assets/images/player_walk.png
+    - assets/images/player_idle.png
+    - assets/images/player_axe.png
+    - assets/images/player_pick.png
+    - assets/images/player_sword.png
+    # NPC sprites
+    - assets/images/npc_mayor.png
+    - assets/images/npc_blacksmith.png
+    - assets/images/npc_shopkeeper.png
+    - assets/images/npc_farmer.png
+    - assets/images/npc_girl.png
+    # Enemy sprites
     - assets/images/slime.png
     - assets/images/bat.png
-    - assets/images/coin.png
-    - assets/images/heart.png
-    - assets/images/gem.png
+    - assets/images/skeleton.png
+    # Terrain
+    - assets/images/tileset.png
+    # World objects
     - assets/images/tree.png
     - assets/images/rock.png
-    - assets/images/grass.png
-    - assets/images/background.png
-    - assets/images/potion.png
-    - assets/images/portal.png
-    - assets/images/sign.png
-    - assets/images/boss.png
-    - assets/images/archer.png
-    - assets/images/boar.png
-    - assets/images/bomb.png
-    - assets/images/bow.png
-    - assets/images/staff.png
-    - assets/images/merchant.png
-    - assets/images/arrow.png
-    - assets/images/fireball.png
-    - assets/images/dungeon.png
+    - assets/images/bush.png
     - assets/images/chest.png
-    - assets/images/lava.png
-    - assets/images/shield.png
-    - assets/images/boots.png
-
-  # To add custom fonts to your application, add a fonts section here,
-  # in this "flutter" section. Each entry in this list should have a
-  # "family" key with the font family name, and a "fonts" key with a
-  # list giving the asset and other descriptors for the font. For
-  # example:
-  # fonts:
-  #   - family: Schyler
-  #     fonts:
-  #       - asset: fonts/Schyler-Regular.ttf
-  #       - asset: fonts/Schyler-Italic.ttf
-  #         style: italic
-  #   - family: Trajan Pro
-  #     fonts:
-  #       - asset: fonts/TrajanPro.ttf
-  #       - asset: fonts/TrajanPro_Bold.ttf
-  #         weight: 700
-  #
-  # For details regarding fonts from package dependencies,
-  # see https://flutter.dev/to/font-from-package
+    - assets/images/furnace.png
+    - assets/images/workbench.png
+    - assets/images/house.png
+    - assets/images/shop.png
+    - assets/images/bed.png
+    # Items
+    - assets/images/items.png
+    # UI
+    - assets/images/heart.png
+    - assets/images/energy.png
+    - assets/images/coin_ui.png
+    # Background
+    - assets/images/title_bg.png
+    # Effects
+    - assets/images/particle.png

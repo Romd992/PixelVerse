@@ -5,7 +5,7 @@
     "display": "standalone",
     "background_color": "#1a1a2e",
     "theme_color": "#FFB300",
-    "description": "像素风动作冒险游戏 - 探索、战斗、收集",
+    "description": "PixelVerse - A pixel-art sandbox survival crafting game",
     "orientation": "landscape",
     "prefer_related_applications": false,
     "icons": [

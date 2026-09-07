@@ -1,21 +1,15 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flame/components.dart';
 
-/// 虚拟摇杆（左下角触控控件）
-///
-/// 输出归一化方向向量 (dx, dy)，范围 -1 ~ 1。
-/// 支持手指拖动，松手自动回中。
+/// A virtual joystick for touch controls.
 class VirtualJoystick extends StatefulWidget {
-  /// 方向变化回调
-  final void Function(double dx, double dy) onDirectionChanged;
-
-  /// 摇杆底盘直径
-  final double size;
+  final void Function(Vector2 direction) onDirectionChanged;
+  final VoidCallback onIdle;
 
   const VirtualJoystick({
     super.key,
     required this.onDirectionChanged,
-    this.size = 120,
+    required this.onIdle,
   });
 
   @override
@@ -23,81 +17,143 @@ class VirtualJoystick extends StatefulWidget {
 }
 
 class _VirtualJoystickState extends State<VirtualJoystick> {
-  /// 摇杆旋钮相对中心的偏移
-  double _knobX = 0;
-  double _knobY = 0;
+  static const double joystickSize = 120;
+  static const double knobSize = 50;
+  static const double maxRadius = (joystickSize - knobSize) / 2;
 
-  /// 是否正在触控
-  bool _active = false;
+  Offset _knobOffset = Offset.zero;
+  bool _isDragging = false;
+  int? _activePointerId;
 
-  /// 旋钮最大活动半径
-  double get _maxRadius => widget.size * 0.35;
-
-  /// 根据触控位置更新旋钮，并输出归一化方向
   void _updateKnob(Offset localPosition) {
-    final center = widget.size / 2;
-    var dx = localPosition.dx - center;
-    var dy = localPosition.dy - center;
-    final dist = sqrt(dx * dx + dy * dy);
-    if (dist > _maxRadius) {
-      dx = dx / dist * _maxRadius;
-      dy = dy / dist * _maxRadius;
+    final center = Offset(joystickSize / 2, joystickSize / 2);
+    final diff = localPosition - center;
+    final dist = diff.distance;
+
+    if (dist > maxRadius) {
+      final ratio = maxRadius / dist;
+      _knobOffset = Offset(diff.dx * ratio, diff.dy * ratio);
+    } else {
+      _knobOffset = diff;
     }
-    setState(() {
-      _knobX = dx;
-      _knobY = dy;
-    });
-    widget.onDirectionChanged(dx / _maxRadius, dy / _maxRadius);
+
+    // Send normalized direction
+    if (dist > 5) {
+      final normalized = Vector2(
+        _knobOffset.dx / maxRadius,
+        _knobOffset.dy / maxRadius,
+      );
+      widget.onDirectionChanged(normalized);
+    }
   }
 
-  /// 松手回中
-  void _reset() {
-    setState(() {
-      _knobX = 0;
-      _knobY = 0;
-      _active = false;
-    });
-    widget.onDirectionChanged(0, 0);
+  void _resetKnob() {
+    _knobOffset = Offset.zero;
+    _isDragging = false;
+    _activePointerId = null;
+    widget.onIdle();
   }
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onPanStart: (details) {
-        _active = true;
-        _updateKnob(details.localPosition);
+    return Listener(
+      onPointerDown: (event) {
+        if (_activePointerId == null) {
+          _activePointerId = event.pointer;
+          _isDragging = true;
+          final renderBox = context.findRenderObject() as RenderBox?;
+          if (renderBox != null) {
+            final local = renderBox.globalToLocal(event.position);
+            _updateKnob(local);
+          }
+          setState(() {});
+        }
       },
-      onPanUpdate: (details) {
-        _updateKnob(details.localPosition);
+      onPointerMove: (event) {
+        if (event.pointer == _activePointerId && _isDragging) {
+          final renderBox = context.findRenderObject() as RenderBox?;
+          if (renderBox != null) {
+            final local = renderBox.globalToLocal(event.position);
+            _updateKnob(local);
+          }
+          setState(() {});
+        }
       },
-      onPanEnd: (_) => _reset(),
-      onPanCancel: () => _reset(),
+      onPointerUp: (event) {
+        if (event.pointer == _activePointerId) {
+          _resetKnob();
+          setState(() {});
+        }
+      },
+      onPointerCancel: (event) {
+        if (event.pointer == _activePointerId) {
+          _resetKnob();
+          setState(() {});
+        }
+      },
       child: Container(
-        width: widget.size,
-        height: widget.size,
+        width: joystickSize,
+        height: joystickSize,
         decoration: BoxDecoration(
-          color: Colors.black38,
+          color: Colors.black.withOpacity(0.3),
           shape: BoxShape.circle,
-          border: Border.all(color: Colors.white54, width: 2),
+          border: Border.all(color: Colors.white30, width: 2),
         ),
-        child: Center(
-          child: Transform.translate(
-            offset: Offset(_knobX, _knobY),
-            child: Container(
-              width: widget.size * 0.4,
-              height: widget.size * 0.4,
-              decoration: BoxDecoration(
-                color: _active ? Colors.white70 : Colors.white54,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.3),
-                    blurRadius: 4,
-                  ),
-                ],
+        child: Stack(
+          children: [
+            // Direction indicators
+            Positioned(
+              top: 8,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Icon(Icons.keyboard_arrow_up,
+                    color: Colors.white30, size: 16),
               ),
             ),
-          ),
+            Positioned(
+              bottom: 8,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Icon(Icons.keyboard_arrow_down,
+                    color: Colors.white30, size: 16),
+              ),
+            ),
+            Positioned(
+              top: 0,
+              bottom: 0,
+              left: 8,
+              child: Center(
+                child: Icon(Icons.keyboard_arrow_left,
+                    color: Colors.white30, size: 16),
+              ),
+            ),
+            Positioned(
+              top: 0,
+              bottom: 0,
+              right: 8,
+              child: Center(
+                child: Icon(Icons.keyboard_arrow_right,
+                    color: Colors.white30, size: 16),
+              ),
+            ),
+            // Knob
+            Center(
+              child: Transform.translate(
+                offset: _knobOffset,
+                child: Container(
+                  width: knobSize,
+                  height: knobSize,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.4),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white54, width: 2),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
