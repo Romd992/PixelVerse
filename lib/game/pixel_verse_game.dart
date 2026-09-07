@@ -10,6 +10,8 @@ import '../components/enemy_component.dart';
 import '../components/world_object.dart';
 import '../components/crop_component.dart';
 import '../components/dropped_item.dart';
+import '../components/particle_component.dart';
+import '../components/damage_number.dart';
 import '../models/game_state.dart';
 import '../models/item.dart';
 import '../systems/gathering_system.dart';
@@ -37,9 +39,19 @@ class PixelVerseGame extends FlameGame with HasCollisionDetection {
   final List<DroppedItem> droppedItems = [];
 
   // Sprite animations
-  final Map<(PlayerState, Facing), SpriteAnimation> playerAnimations = {};
+  final Map<(PlayerAnimState, Facing), SpriteAnimation> playerAnimations = {};
   final Map<String, SpriteAnimation> npcAnimations = {};
   final Map<EnemyType, SpriteAnimation> enemyAnimations = {};
+
+  // Effect sprites/animations
+  Sprite? shadowSprite;
+  SpriteAnimation? hitSparkAnimation;
+
+  // Color filter overlay
+  late RectangleComponent _colorFilter;
+
+  // Smooth camera target
+  Vector2 _cameraTarget = Vector2.zero();
 
   // Item sprites (from items.png)
   final List<Sprite?> itemSprites = List.filled(32, null);
@@ -97,6 +109,14 @@ class PixelVerseGame extends FlameGame with HasCollisionDetection {
     );
     add(_nightOverlay);
 
+    // Color filter overlay (morning/evening tint)
+    _colorFilter = RectangleComponent(
+      size: size,
+      paint: Paint()..color = Colors.transparent,
+      priority: 1001,
+    );
+    add(_colorFilter);
+
     // Load the farm scene
     await _loadFarmScene();
 
@@ -104,10 +124,23 @@ class PixelVerseGame extends FlameGame with HasCollisionDetection {
     player = PlayerComponent(
       gameState: gameState,
       animations: playerAnimations,
+      shadowSprite: shadowSprite,
     );
     player!.onAction = _handlePlayerAction;
+    player!.onDamaged = () {
+      onStateChanged?.call();
+      if (gameState.health <= 0) {
+        CombatSystem.respawnPlayer(gameState);
+        player!.position = Vector2(gameState.playerX, gameState.playerY);
+        if (gameState.scene == GameScene.mine) {
+          exitMine();
+        }
+        onPlayerDeath?.call();
+      }
+    };
     _world.add(player!);
-    _camera.follow(player!);
+    _cameraTarget = player!.position.clone();
+    _camera.viewfinder.position = _cameraTarget.clone();
 
     // Load crops from save
     _rebuildCropComponents();
@@ -176,24 +209,47 @@ class PixelVerseGame extends FlameGame with HasCollisionDetection {
     try {
       coinSprite = await Sprite.load('coin_ui.png');
     } catch (_) {}
+
+    // Load shadow
+    try {
+      shadowSprite = await Sprite.load('shadow.png');
+    } catch (_) {}
+
+    // Load hit spark animation (4 cols x 2 rows = 8 frames)
+    try {
+      final sparkImg = await images.load('hit_spark.png');
+      final sparkSheet = SpriteSheet(image: sparkImg, srcSize: Vector2(32, 32));
+      final sparkSprites = <Sprite>[];
+      for (int r = 0; r < 2; r++) {
+        for (int c = 0; c < 4; c++) {
+          sparkSprites.add(sparkSheet.getSprite(r, c));
+        }
+      }
+      hitSparkAnimation = SpriteAnimation.spriteList(
+        sparkSprites,
+        stepTime: 0.05,
+        loop: false,
+      );
+    } catch (_) {}
   }
 
   Future<void> _loadPlayerAnimations() async {
-    // Helper to load a row-based animation
+    // Helper to load a row-based animation (48x48 frames)
     SpriteAnimation? loadRowAnim(
       String file,
       int row,
       int cols,
-      double stepTime,
-    ) {
+      double stepTime, {
+      bool loop = true,
+    }) {
       try {
         final img = images.fromCache(file);
-        final sheet = SpriteSheet(image: img, srcSize: Vector2(32, 32));
+        final sheet = SpriteSheet(image: img, srcSize: Vector2(48, 48));
         final sprites = <Sprite>[];
         for (int c = 0; c < cols; c++) {
           sprites.add(sheet.getSprite(row, c));
         }
-        return SpriteAnimation.spriteList(sprites, stepTime: stepTime);
+        return SpriteAnimation.spriteList(sprites, stepTime: stepTime, loop: loop);
       } catch (_) {
         return null;
       }
@@ -225,23 +281,29 @@ class PixelVerseGame extends FlameGame with HasCollisionDetection {
       final facing = entry.key;
       final row = entry.value;
 
-      // Walk animation (4 cols)
-      final walk = loadRowAnim('player_walk.png', row, 4, 0.15);
-      if (walk != null) playerAnimations[(PlayerState.walking, facing)] = walk;
+      // Walk animation (6 cols, 0.12s/frame)
+      final walk = loadRowAnim('player_walk.png', row, 6, 0.12);
+      if (walk != null) playerAnimations[(PlayerAnimState.walk, facing)] = walk;
 
-      // Idle animation (2 cols)
-      final idle = loadRowAnim('player_idle.png', row, 2, 0.4);
-      if (idle != null) playerAnimations[(PlayerState.idle, facing)] = idle;
+      // Idle animation (4 cols, 0.3s/frame)
+      final idle = loadRowAnim('player_idle.png', row, 4, 0.3);
+      if (idle != null) playerAnimations[(PlayerAnimState.idle, facing)] = idle;
 
-      // Tool animations (3 cols)
-      final axe = loadRowAnim('player_axe.png', row, 3, 0.13);
-      if (axe != null) playerAnimations[(PlayerState.usingAxe, facing)] = axe;
+      // Tool animations (4 cols each, one-shot)
+      final axe = loadRowAnim('player_axe.png', row, 4, 0.08, loop: false);
+      if (axe != null) playerAnimations[(PlayerAnimState.axe, facing)] = axe;
 
-      final pick = loadRowAnim('player_pick.png', row, 3, 0.13);
-      if (pick != null) playerAnimations[(PlayerState.usingPick, facing)] = pick;
+      final pick = loadRowAnim('player_pick.png', row, 4, 0.08, loop: false);
+      if (pick != null) playerAnimations[(PlayerAnimState.pick, facing)] = pick;
 
-      final sword = loadRowAnim('player_sword.png', row, 3, 0.12);
-      if (sword != null) playerAnimations[(PlayerState.usingSword, facing)] = sword;
+      final sword = loadRowAnim('player_sword.png', row, 4, 0.10, loop: false);
+      if (sword != null) playerAnimations[(PlayerAnimState.sword, facing)] = sword;
+
+      // Hoe and watering can reuse axe animation as fallback
+      if (axe != null) {
+        playerAnimations[(PlayerAnimState.hoe, facing)] = axe;
+        playerAnimations[(PlayerAnimState.water, facing)] = axe;
+      }
     }
   }
 
@@ -258,37 +320,41 @@ class PixelVerseGame extends FlameGame with HasCollisionDetection {
       try {
         await images.load(file);
         final img = images.fromCache(file);
-        final sheet = SpriteSheet(image: img, srcSize: Vector2(32, 32));
+        final sheet = SpriteSheet(image: img, srcSize: Vector2(48, 48));
         final sprites = <Sprite>[];
-        for (int c = 0; c < 4; c++) {
-          sprites.add(sheet.getSprite(0, c)); // down-facing row
+        for (int c = 0; c < 6; c++) {
+          sprites.add(sheet.getSprite(0, c)); // down-facing row, 6 frames
         }
         npcAnimations[key] =
-            SpriteAnimation.spriteList(sprites, stepTime: 0.2);
+            SpriteAnimation.spriteList(sprites, stepTime: 0.15);
       } catch (_) {}
     });
   }
 
   Future<void> _loadEnemyAnimations() async {
     final enemyFiles = {
-      EnemyType.slime: 'slime.png',
-      EnemyType.bat: 'bat.png',
-      EnemyType.skeleton: 'skeleton.png',
+      EnemyType.slime: ('slime.png', 1, 6, 0.12),
+      EnemyType.bat: ('bat.png', 1, 4, 0.08),
+      EnemyType.skeleton: ('skeleton.png', 4, 4, 0.15),
     };
 
     for (final entry in enemyFiles.entries) {
       try {
-        await images.load(entry.value);
-        final img = images.fromCache(entry.value);
-        final sheet = SpriteSheet(image: img, srcSize: Vector2(32, 32));
+        final file = entry.value.$1;
+        final rows = entry.value.$2;
+        final cols = entry.value.$3;
+        final step = entry.value.$4;
+        await images.load(file);
+        final img = images.fromCache(file);
+        final sheet = SpriteSheet(image: img, srcSize: Vector2(48, 48));
         final sprites = <Sprite>[];
-        for (int r = 0; r < 2; r++) {
-          for (int c = 0; c < 2; c++) {
+        for (int r = 0; r < rows; r++) {
+          for (int c = 0; c < cols; c++) {
             sprites.add(sheet.getSprite(r, c));
           }
         }
         enemyAnimations[entry.key] =
-            SpriteAnimation.spriteList(sprites, stepTime: 0.2);
+            SpriteAnimation.spriteList(sprites, stepTime: step);
       } catch (_) {}
     }
   }
@@ -458,6 +524,7 @@ class PixelVerseGame extends FlameGame with HasCollisionDetection {
       def: def,
       position: position,
       walkAnimation: npcAnimations[id],
+      shadowSprite: shadowSprite,
     );
     npc.onInteract = (n) {
       if (def.isShopkeeper) {
@@ -487,6 +554,10 @@ class PixelVerseGame extends FlameGame with HasCollisionDetection {
           // Inventory full, don't pick up
           item.count = overflow;
           return;
+        }
+        // Pickup sparkle particles
+        for (final p in ParticleComponent.pickupSparkle(item.position)) {
+          _world.add(p);
         }
         _world.remove(item);
         droppedItems.remove(item);
@@ -689,6 +760,15 @@ class PixelVerseGame extends FlameGame with HasCollisionDetection {
         gameState.energy -= 5;
         if (gameState.energy < 0) gameState.energy = 0;
 
+        // Hit sparks at object position
+        for (final p in ParticleComponent.hitSparkBurst(
+          obj.dropPosition,
+          sparkAnim: hitSparkAnimation,
+          count: 4,
+        )) {
+          _world.add(p);
+        }
+
         final destroyed = obj.takeDamage(1);
         if (destroyed) {
           // Drops handled in onDestroyed callback
@@ -719,6 +799,18 @@ class PixelVerseGame extends FlameGame with HasCollisionDetection {
       player!.directionString,
     );
 
+    // Slash effect
+    final slash = SlashEffect(
+      position: player!.position +
+          Vector2(
+            player!.directionString == 'left' ? -32 : (player!.directionString == 'right' ? 32 : 0),
+            player!.directionString == 'up' ? -32 : (player!.directionString == 'down' ? 32 : 0),
+          ),
+      direction: player!.directionString,
+    );
+    _world.add(slash);
+
+    bool hitSomething = false;
     for (final enemy in List<EnemyComponent>.from(enemies)) {
       if (CombatSystem.isInHitbox(
         enemy.position.x,
@@ -728,10 +820,18 @@ class PixelVerseGame extends FlameGame with HasCollisionDetection {
         hitbox.w,
         hitbox.h,
       )) {
+        hitSomething = true;
         final dead = enemy.takeDamage(
           CombatSystem.baseSwordDamage,
           player!.position,
         );
+        // Hit sparks
+        for (final p in ParticleComponent.hitSparkBurst(
+          enemy.position,
+          sparkAnim: hitSparkAnimation,
+        )) {
+          _world.add(p);
+        }
         if (dead) {
           final drops = CombatSystem.getDrops(
             enemy.type.toString().split('.').last,
@@ -877,18 +977,11 @@ class PixelVerseGame extends FlameGame with HasCollisionDetection {
       type,
       position,
       animation: enemyAnimations[type],
+      shadowSprite: shadowSprite,
     );
     enemy.onPlayerHit = (damage) {
-      final died = CombatSystem.damagePlayer(gameState, damage);
-      onStateChanged?.call();
-      if (died) {
-        CombatSystem.respawnPlayer(gameState);
-        player!.position = Vector2(gameState.playerX, gameState.playerY);
-        if (gameState.scene == GameScene.mine) {
-          exitMine();
-        }
-        onPlayerDeath?.call();
-      }
+      // Player takes damage with knockback
+      player?.takeDamage(damage, enemy.position);
     };
     _world.add(enemy);
     enemies.add(enemy);
@@ -922,10 +1015,21 @@ class PixelVerseGame extends FlameGame with HasCollisionDetection {
     // Update time
     timeSystem.update(dt);
 
-    // Update night overlay
+    // Smooth camera follow
+    if (player != null) {
+      final followSpeed = 1 - pow(0.001, dt).toDouble();
+      _cameraTarget.lerp(player!.position, followSpeed);
+      _camera.viewfinder.position = _cameraTarget.clone();
+    }
+
+    // Update night overlay (smooth darkness)
     final darkness = timeSystem.darknessAlpha;
     _nightOverlay.paint =
         Paint()..color = Colors.black.withOpacity(darkness);
+
+    // Color filter: morning/evening warm tint, night cool tint
+    final filterColor = timeSystem.getFilterColor();
+    _colorFilter.paint = Paint()..color = filterColor;
 
     // Update NPC player proximity
     if (player != null) {

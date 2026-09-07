@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/game_state.dart';
 import '../models/item.dart';
+import 'pixel_ui.dart';
 
 /// Full inventory/backpack overlay (4 rows x 8 cols = 32 slots).
 class InventoryOverlay extends StatelessWidget {
@@ -21,16 +22,9 @@ class InventoryOverlay extends StatelessWidget {
       child: Container(
         width: 520,
         padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: const Color(0xFF3E2723),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFF8D6E63), width: 3),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.5),
-              blurRadius: 20,
-            ),
-          ],
+        decoration: PixelUi.panelDecoration(
+          bgColor: const Color(0xFF3E2723),
+          radius: 16,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -39,10 +33,9 @@ class InventoryOverlay extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   'Inventory',
-                  style: TextStyle(
-                    color: Colors.white,
+                  style: PixelUi.outlinedText(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
                   ),

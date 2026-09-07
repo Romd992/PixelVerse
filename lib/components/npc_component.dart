@@ -1,10 +1,11 @@
-import 'package:flutter/painting.dart';
-import 'dart:async';
 import 'dart:math';
 import 'package:flame/components.dart';
 import 'package:flame/sprite.dart';
+import 'package:flutter/painting.dart';
+import 'shadow_component.dart';
+import 'player_component.dart' show pixelPaint;
 
-/// NPC definition with name, dialogue lines, and sprite.
+/// NPC definition.
 class NpcDef {
   final String id;
   final String name;
@@ -85,20 +86,21 @@ class NpcDefinitions {
   static NpcDef getById(String id) => all.firstWhere((n) => n.id == id);
 }
 
-/// An NPC component with simple patrol animation.
+/// NPC component with smooth patrol animation and shadow.
 class NpcComponent extends PositionComponent {
   final NpcDef def;
   final SpriteAnimation? walkAnimation;
   final Sprite? idleSprite;
   late final SpriteAnimationTicker? _walkTicker;
+  ShadowComponent? _shadow;
 
   final Vector2 _homePosition;
   Vector2 _targetOffset = Vector2.zero();
   double _patrolTimer = 0;
   final Random _rand = Random();
-  static const double patrolRange = 48;
+  static const double patrolRange = 56;
+  static const double spriteSize = 48.0;
 
-  // Interaction
   bool playerNearby = false;
   void Function(NpcComponent npc)? onInteract;
 
@@ -107,24 +109,36 @@ class NpcComponent extends PositionComponent {
     required Vector2 position,
     this.walkAnimation,
     this.idleSprite,
+    Sprite? shadowSprite,
     this.onInteract,
   })  : _homePosition = position.clone(),
         _walkTicker = walkAnimation?.createTicker(),
         super(
           position: position,
-          size: Vector2(32, 32),
+          size: Vector2(spriteSize, spriteSize),
           anchor: Anchor.center,
-        );
+        ) {
+    _shadow = ShadowComponent(
+      position: Vector2(0, spriteSize / 2 - 4),
+      sprite: shadowSprite,
+      shadowWidth: 30,
+      shadowHeight: 9,
+    );
+  }
+
+  @override
+  Future<void> onLoad() async {
+    add(_shadow!);
+  }
 
   @override
   void update(double dt) {
     super.update(dt);
     _walkTicker?.update(dt);
 
-    // Simple patrol
     _patrolTimer -= dt;
     if (_patrolTimer <= 0) {
-      _patrolTimer = 2 + _rand.nextDouble() * 3;
+      _patrolTimer = 2.5 + _rand.nextDouble() * 3.5;
       _targetOffset = Vector2(
         (_rand.nextDouble() - 0.5) * patrolRange * 2,
         (_rand.nextDouble() - 0.5) * patrolRange * 2,
@@ -134,7 +148,7 @@ class NpcComponent extends PositionComponent {
     final target = _homePosition + _targetOffset;
     final diff = target - position;
     if (diff.length > 2) {
-      position += diff.normalized() * 20 * dt;
+      position += diff.normalized() * 24 * dt;
     }
   }
 
@@ -145,41 +159,49 @@ class NpcComponent extends PositionComponent {
       _walkTicker!.getSprite().render(
             canvas,
             position: Vector2(0, 0),
-            size: Vector2(32, 32),
+            size: Vector2(spriteSize, spriteSize),
+            overridePaint: pixelPaint,
           );
     } else if (idleSprite != null) {
       idleSprite!.render(
         canvas,
         position: Vector2(0, 0),
-        size: Vector2(32, 32),
+        size: Vector2(spriteSize, spriteSize),
+        overridePaint: pixelPaint,
       );
     } else {
       canvas.drawRect(
-        Rect.fromLTWH(4, 2, 24, 28),
+        Rect.fromLTWH(
+          (spriteSize - 28) / 2,
+          spriteSize - 34,
+          28,
+          30,
+        ),
         Paint()..color = const Color(0xFF9B59B6),
       );
     }
 
-    // Show name if nearby
     if (playerNearby) {
       final tp = TextPaint(
         style: const TextStyle(
           color: Color(0xFFFFFFFF),
-          fontSize: 10,
+          fontSize: 11,
           fontWeight: FontWeight.bold,
+          shadows: [
+            Shadow(color: Color(0xFF000000), offset: Offset(1, 1)),
+          ],
         ),
       );
       tp.render(
         canvas,
         def.name,
-        Vector2(size.x / 2, -8),
+        Vector2(spriteSize / 2, -6),
         anchor: Anchor.bottomCenter,
       );
     }
   }
 
-  /// Check if player is within interaction range.
-  bool isPlayerNear(Vector2 playerPos, {double range = 48}) {
+  bool isPlayerNear(Vector2 playerPos, {double range = 56}) {
     final dx = playerPos.x - position.x;
     final dy = playerPos.y - position.y;
     playerNearby = dx * dx + dy * dy < range * range;

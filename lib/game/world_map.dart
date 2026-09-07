@@ -225,6 +225,33 @@ class WorldMap extends PositionComponent {
         }
       }
     }
+
+    // Water animation: subtle shimmer overlay on water tiles
+    if (!isMine) {
+      final shimmer = (sin(_waterTimer * 2) + 1) / 2;
+      final waterPaint = Paint()
+        ..color = const Color(0xFFFFFFFF).withOpacity(0.08 + shimmer * 0.05);
+      for (int y = 0; y < mapHeight; y++) {
+        for (int x = 0; x < mapWidth; x++) {
+          if (getTile(x, y) == TileIndices.water) {
+            final dx = x * tileSize;
+            final dy = y * tileSize + sin(_waterTimer + x * 0.5 + y * 0.3) * 2;
+            canvas.drawRect(
+              Rect.fromLTWH(dx + 4, dy + 8, tileSize - 8, 4),
+              waterPaint,
+            );
+          }
+        }
+      }
+    }
+  }
+
+  double _waterTimer = 0;
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+    _waterTimer += dt;
   }
 
   Color _fallbackTileColor(int tile) {

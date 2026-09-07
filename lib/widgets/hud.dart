@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/game_state.dart';
 import '../models/item.dart';
+import 'pixel_ui.dart';
 
 /// The heads-up display: health, energy, coins, time, hotbar.
 class Hud extends StatelessWidget {
@@ -174,15 +175,17 @@ class Hud extends StatelessWidget {
         children: [
           Text(
             gameState.timeString,
-            style: const TextStyle(
-              color: Colors.white,
+            style: PixelUi.outlinedText(
               fontSize: 14,
               fontWeight: FontWeight.bold,
             ),
           ),
           Text(
             '${gameState.seasonName} ${gameState.day}',
-            style: const TextStyle(color: Colors.white70, fontSize: 11),
+            style: PixelUi.outlinedText(
+              fontSize: 11,
+              color: Colors.white70,
+            ),
           ),
           Text(
             gameState.weatherName,
@@ -221,10 +224,9 @@ class Hud extends StatelessWidget {
   Widget _buildHotbar() {
     return Container(
       padding: const EdgeInsets.all(6),
-      decoration: BoxDecoration(
-        color: Colors.black54,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.white30),
+      decoration: PixelUi.panelDecoration(
+        bgColor: const Color(0xFF2C1810).withOpacity(0.9),
+        radius: 10,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

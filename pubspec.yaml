@@ -60,3 +60,5 @@ flutter:
     - assets/images/title_bg.png
     # Effects
     - assets/images/particle.png
+    - assets/images/shadow.png
+    - assets/images/hit_spark.png

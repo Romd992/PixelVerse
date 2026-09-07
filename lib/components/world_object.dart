@@ -34,6 +34,10 @@ class WorldObject extends PositionComponent with SolidObject, CollisionCallbacks
   late RectangleHitbox _hitbox;
   final Random _rand = Random();
 
+  // Tree sway
+  double _swayTimer = 0;
+  final double _swayPhase = Random().nextDouble() * 2 * pi;
+
   // For placed objects that can be removed
   final bool isPlaced;
 
@@ -144,16 +148,41 @@ class WorldObject extends PositionComponent with SolidObject, CollisionCallbacks
   Vector2 get dropPosition => position + Vector2(0, -size.y / 2);
 
   @override
+  void update(double dt) {
+    super.update(dt);
+    if (type == WorldObjectType.tree) {
+      _swayTimer += dt;
+    }
+  }
+
+  @override
   void render(Canvas canvas) {
     super.render(canvas);
+
+    // Tree sway: rotate slightly around base
+    if (type == WorldObjectType.tree) {
+      final sway = sin(_swayTimer * 1.5 + _swayPhase) * 0.03;
+      canvas.save();
+      canvas.translate(size.x / 2, size.y);
+      canvas.rotate(sway);
+      canvas.translate(-size.x / 2, -size.y);
+      _renderSprite(canvas);
+      canvas.restore();
+      return;
+    }
+
+    _renderSprite(canvas);
+  }
+
+  void _renderSprite(Canvas canvas) {
     if (sprite != null) {
       sprite!.render(
         canvas,
         position: Vector2(0, 0),
         size: size,
+        overridePaint: Paint()..filterQuality = FilterQuality.none,
       );
     } else {
-      // Fallback colored rectangle
       final color = _fallbackColor();
       canvas.drawRect(
         Rect.fromLTWH(0, 0, size.x, size.y),

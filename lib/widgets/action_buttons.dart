@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'pixel_ui.dart';
 
-/// Action buttons: attack/gather and interact.
-class ActionButtons extends StatelessWidget {
+/// Action buttons: attack/gather and interact, with press states.
+class ActionButtons extends StatefulWidget {
   final VoidCallback onAction;
   final VoidCallback onInteract;
   final String actionLabel;
@@ -16,25 +17,36 @@ class ActionButtons extends StatelessWidget {
   });
 
   @override
+  State<ActionButtons> createState() => _ActionButtonsState();
+}
+
+class _ActionButtonsState extends State<ActionButtons> {
+  bool _actionPressed = false;
+  bool _interactPressed = false;
+
+  @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Interact button (left)
         _buildCircleButton(
           icon: Icons.handshake,
-          label: interactLabel,
+          label: widget.interactLabel,
           color: Colors.blue,
-          onTap: onInteract,
+          size: 56,
+          pressed: _interactPressed,
+          onTap: widget.onInteract,
+          onPressedChange: (v) => setState(() => _interactPressed = v),
         ),
         const SizedBox(width: 16),
-        // Action/attack button (right, larger)
         _buildCircleButton(
           icon: Icons.gavel,
-          label: actionLabel,
+          label: widget.actionLabel,
           color: Colors.red,
           size: 64,
-          onTap: onAction,
+          pressed: _actionPressed,
+          onTap: widget.onAction,
+          onPressedChange: (v) => setState(() => _actionPressed = v),
         ),
       ],
     );
@@ -45,38 +57,53 @@ class ActionButtons extends StatelessWidget {
     required String label,
     required Color color,
     required VoidCallback onTap,
+    required void Function(bool) onPressedChange,
+    required bool pressed,
     double size = 56,
   }) {
     return Listener(
-      onPointerDown: (_) => onTap(),
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.7),
-          shape: BoxShape.circle,
-          border: Border.all(color: Colors.white54, width: 2),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.3),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
+      onPointerDown: (_) {
+        onPressedChange(true);
+        onTap();
+      },
+      onPointerUp: (_) => onPressedChange(false),
+      onPointerCancel: (_) => onPressedChange(false),
+      child: AnimatedScale(
+        scale: pressed ? 0.9 : 1.0,
+        duration: const Duration(milliseconds: 60),
+        child: Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            color: pressed
+                ? color.withOpacity(0.9)
+                : color.withOpacity(0.7),
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: pressed ? Colors.white : Colors.white54,
+              width: pressed ? 3 : 2,
             ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: Colors.white, size: size * 0.4),
-            Text(
-              label,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: size * 0.14,
-                fontWeight: FontWeight.bold,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.4),
+                blurRadius: pressed ? 2 : 6,
+                offset: Offset(0, pressed ? 1 : 3),
               ),
-            ),
-          ],
+            ],
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: Colors.white, size: size * 0.38),
+              Text(
+                label,
+                style: PixelUi.outlinedText(
+                  fontSize: size * 0.13,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

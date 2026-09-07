@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:flutter/material.dart';
 import '../models/game_state.dart';
 import '../systems/farming_system.dart';
 
@@ -99,4 +100,32 @@ class TimeSystem {
   /// Format the current date as a string.
   String get dateString =>
       'Day ${gameState.day} of ${gameState.seasonName}, Year ${gameState.year}';
+
+  /// Get the ambient color filter based on time of day.
+  /// Morning/evening = warm orange, night = cool blue, midday = transparent.
+  Color getFilterColor() {
+    final t = gameState.timeOfDay;
+
+    // Dawn (6-8 AM): warm orange fade-in then out
+    if (t >= 6 && t < 8) {
+      final a = (t - 6) / 2; // 0->1
+      final alpha = sin(a * pi) * 0.15;
+      return const Color(0xFFFF9933).withOpacity(alpha);
+    }
+
+    // Golden hour evening (17-19): warm orange
+    if (t >= 17 && t < 19.5) {
+      final a = (t - 17) / 2.5;
+      final alpha = sin(a * pi) * 0.18;
+      return const Color(0xFFFF6633).withOpacity(alpha);
+    }
+
+    // Night (19.5-5): cool blue tint
+    if (t >= 19.5 || t < 5) {
+      return const Color(0xFF1a237e).withOpacity(0.12);
+    }
+
+    // Midday: no filter
+    return Colors.transparent;
+  }
 }

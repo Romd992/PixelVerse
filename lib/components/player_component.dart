@@ -1,42 +1,58 @@
-import 'package:flutter/painting.dart';
-import 'dart:async';
+import 'dart:math';
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flame/sprite.dart';
+import 'package:flutter/painting.dart';
 import '../models/game_state.dart';
 import '../models/item.dart';
+import 'shadow_component.dart';
+import 'damage_number.dart';
 
-/// Player movement / action state.
-enum PlayerState { idle, walking, usingAxe, usingPick, usingSword }
+/// Player animation states.
+enum PlayerAnimState { idle, walk, axe, pick, sword, hoe, water, hurt }
 
 /// Facing direction.
 enum Facing { down, left, right, up }
 
-/// The player character with animations, movement, and collision.
+/// Shared pixel-perfect paint.
+final Paint pixelPaint = Paint()..filterQuality = FilterQuality.none;
+
+/// The player character with high-quality animations, shadows, and effects.
 class PlayerComponent extends PositionComponent with CollisionCallbacks {
   final GameState gameState;
 
-  // Animation sets: map of (state, facing) -> SpriteAnimation
-  final Map<(PlayerState, Facing), SpriteAnimation> _animations = {};
+  // Animation sets: (state, facing) -> SpriteAnimation
+  final Map<(PlayerAnimState, Facing), SpriteAnimation> _animations = {};
   SpriteAnimation? _currentAnim;
   SpriteAnimationTicker? _currentTicker;
   Sprite? _fallbackSprite;
 
+  // Shadow
+  ShadowComponent? _shadow;
+
+  // State
+  PlayerAnimState _state = PlayerAnimState.idle;
+  Facing _facing = Facing.down;
+  bool _isOneShotPlaying = false;
+  double _oneShotTimer = 0;
+  double _oneShotDuration = 0;
+  bool _actionFired = false;
+
   // Input
   Vector2 movementInput = Vector2.zero();
-  bool _actionPressed = false;
-  PlayerState _state = PlayerState.idle;
-  Facing _facing = Facing.down;
 
   // Movement
-  static const double speed = 140.0;
-  static const double playerWidth = 24;
-  static const double playerHeight = 28;
+  static const double speed = 150.0;
+  static const double playerWidth = 22;
+  static const double playerHeight = 26;
+  static const double spriteSize = 48.0;
 
-  // Action timing
-  double _actionTimer = 0;
-  static const double actionDuration = 0.4;
-  bool _actionConsumed = false;
+  // Hurt / invincibility
+  double _hurtTimer = 0;
+  static const double hurtDuration = 0.5;
+  static const double hurtFlashInterval = 0.08;
+  Vector2 _knockbackVel = Vector2.zero();
+  double _knockbackTimer = 0;
 
   // Collision
   late RectangleHitbox _hitbox;
@@ -44,75 +60,130 @@ class PlayerComponent extends PositionComponent with CollisionCallbacks {
 
   // Callbacks
   void Function()? onAction;
-  void Function(Vector2 position)? onPositionChanged;
+  void Function(Vector2 pos, int damage)? onDamageDealt;
+  void Function()? onDamaged;
 
   PlayerComponent({
     required this.gameState,
-    required Map<(PlayerState, Facing), SpriteAnimation> animations,
+    required Map<(PlayerAnimState, Facing), SpriteAnimation> animations,
     Sprite? fallbackSprite,
+    Sprite? shadowSprite,
   }) : super(
           position: Vector2(gameState.playerX, gameState.playerY),
-          size: Vector2(32, 32),
+          size: Vector2(spriteSize, spriteSize),
           anchor: Anchor.center,
         ) {
     _animations.addAll(animations);
     _fallbackSprite = fallbackSprite;
+    _shadow = ShadowComponent(
+      position: Vector2(0, spriteSize / 2 - 4),
+      sprite: shadowSprite,
+      shadowWidth: 32,
+      shadowHeight: 10,
+    );
     _updateAnimation();
   }
 
   Facing get facing => _facing;
-  PlayerState get state => _state;
+  PlayerAnimState get state => _state;
   bool get isUsingTool =>
-      _state == PlayerState.usingAxe ||
-      _state == PlayerState.usingPick ||
-      _state == PlayerState.usingSword;
+      _state == PlayerAnimState.axe ||
+      _state == PlayerAnimState.pick ||
+      _state == PlayerAnimState.sword ||
+      _state == PlayerAnimState.hoe ||
+      _state == PlayerAnimState.water;
+  bool get isHurt => _hurtTimer > 0;
 
   @override
   Future<void> onLoad() async {
+    add(_shadow!);
     _hitbox = RectangleHitbox(
       size: Vector2(playerWidth, playerHeight),
-      position: Vector2((32 - playerWidth) / 2, (32 - playerHeight) / 2 + 2),
+      position: Vector2(
+        (spriteSize - playerWidth) / 2,
+        spriteSize - playerHeight - 4,
+      ),
       isSolid: true,
     );
     add(_hitbox);
   }
 
-  /// Set movement input from joystick/keyboard.
   void setMovement(Vector2 input) {
     movementInput = input;
   }
 
   /// Trigger an action (attack/gather/use tool).
   void triggerAction() {
-    if (isUsingTool) return;
-    _actionPressed = true;
-    _actionTimer = 0;
-    _actionConsumed = false;
+    if (_isOneShotPlaying || _hurtTimer > 0) return;
 
     final selected = gameState.inventory.selectedSlot;
+    PlayerAnimState animState;
+    double duration;
+
     if (!selected.isEmpty) {
       switch (selected.itemId) {
         case Items.axe:
-          _state = PlayerState.usingAxe;
+          animState = PlayerAnimState.axe;
+          duration = 0.08 * 4; // 4 frames
           break;
         case Items.pickaxe:
-          _state = PlayerState.usingPick;
+          animState = PlayerAnimState.pick;
+          duration = 0.08 * 4;
           break;
         case Items.sword:
-          _state = PlayerState.usingSword;
+          animState = PlayerAnimState.sword;
+          duration = 0.10 * 4;
+          break;
+        case Items.hoe:
+          animState = PlayerAnimState.hoe;
+          duration = 0.08 * 4;
+          break;
+        case Items.wateringCan:
+          animState = PlayerAnimState.water;
+          duration = 0.10 * 4;
           break;
         default:
-          _state = PlayerState.usingAxe; // generic use
+          animState = PlayerAnimState.axe;
+          duration = 0.08 * 4;
       }
     } else {
-      _state = PlayerState.usingAxe;
+      animState = PlayerAnimState.axe;
+      duration = 0.08 * 4;
     }
+
+    _state = animState;
+    _isOneShotPlaying = true;
+    _oneShotTimer = 0;
+    _oneShotDuration = duration;
+    _actionFired = false;
     _updateAnimation();
   }
 
-  /// Get the world position in front of the player (for interaction).
+  /// Apply damage and knockback to the player.
+  void takeDamage(int damage, Vector2 fromPosition) {
+    if (_hurtTimer > 0) return;
+    gameState.health -= damage;
+    if (gameState.health < 0) gameState.health = 0;
+
+    _hurtTimer = hurtDuration;
+    final dir = (position - fromPosition).normalized();
+    _knockbackVel = dir * 180;
+    _knockbackTimer = 0.15;
+
+    // Damage number
+    final dmg = DamageNumber(
+      position: position + Vector2(0, -spriteSize / 2),
+      damage: damage,
+      isPlayerDamage: true,
+    );
+    parent?.add(dmg);
+
+    onDamaged?.call();
+  }
+
+  /// Get the world position in front of the player.
   Vector2 getInteractionPoint() {
-    const double reach = 36.0;
+    const double reach = 40.0;
     switch (_facing) {
       case Facing.down:
         return Vector2(position.x, position.y + reach);
@@ -125,7 +196,6 @@ class PlayerComponent extends PositionComponent with CollisionCallbacks {
     }
   }
 
-  /// Get direction as a string for combat system.
   String get directionString {
     switch (_facing) {
       case Facing.down:
@@ -149,36 +219,49 @@ class PlayerComponent extends PositionComponent with CollisionCallbacks {
   void update(double dt) {
     super.update(dt);
 
-    // Handle action state
-    if (isUsingTool) {
-      _actionTimer += dt;
-      // Fire action callback at midpoint
-      if (!_actionConsumed && _actionTimer >= actionDuration * 0.3) {
-        _actionConsumed = true;
+    // Hurt timer
+    if (_hurtTimer > 0) {
+      _hurtTimer -= dt;
+    }
+
+    // Knockback
+    if (_knockbackTimer > 0) {
+      _knockbackTimer -= dt;
+      position += _knockbackVel * dt;
+      _knockbackVel *= 0.85;
+    }
+
+    // One-shot animation handling
+    if (_isOneShotPlaying) {
+      _oneShotTimer += dt;
+      // Fire action at ~40% through animation
+      if (!_actionFired && _oneShotTimer >= _oneShotDuration * 0.4) {
+        _actionFired = true;
         onAction?.call();
       }
-      if (_actionTimer >= actionDuration) {
-        _state = PlayerState.idle;
-        _actionPressed = false;
+      if (_oneShotTimer >= _oneShotDuration) {
+        _isOneShotPlaying = false;
+        _state = PlayerAnimState.idle;
         _updateAnimation();
       }
     }
 
-    // Movement
-    if (!isUsingTool) {
+    // Movement (only when not in one-shot or hurt)
+    if (!_isOneShotPlaying && _knockbackTimer <= 0) {
       if (movementInput.length > 0.1) {
-        _state = PlayerState.walking;
-        // Normalize and move
+        if (_state != PlayerAnimState.walk) {
+          _state = PlayerAnimState.walk;
+          _updateAnimation();
+        }
         final dir = movementInput.normalized();
         final newPos = position + dir * speed * dt;
 
-        // Check collision before moving
+        // Collision check
         bool canMoveX = true;
         bool canMoveY = true;
         for (final other in _colliding) {
           if (other is SolidObject) {
             final hb = other.hitboxRect;
-            // Test X movement
             final testX = Rect.fromLTWH(
               newPos.x - playerWidth / 2,
               position.y - playerHeight / 2,
@@ -186,7 +269,6 @@ class PlayerComponent extends PositionComponent with CollisionCallbacks {
               playerHeight,
             );
             if (testX.overlaps(hb)) canMoveX = false;
-            // Test Y movement
             final testY = Rect.fromLTWH(
               position.x - playerWidth / 2,
               newPos.y - playerHeight / 2,
@@ -200,69 +282,85 @@ class PlayerComponent extends PositionComponent with CollisionCallbacks {
         if (canMoveX) position.x = newPos.x;
         if (canMoveY) position.y = newPos.y;
 
-        // Update facing based on dominant axis
+        // Update facing
         if (dir.x.abs() > dir.y.abs()) {
-          if (dir.x > 0) {
-            if (_facing != Facing.right) {
-              _facing = Facing.right;
-              _updateAnimation();
-            }
-          } else {
-            if (_facing != Facing.left) {
-              _facing = Facing.left;
-              _updateAnimation();
-            }
+          final newFacing = dir.x > 0 ? Facing.right : Facing.left;
+          if (_facing != newFacing) {
+            _facing = newFacing;
+            if (!_isOneShotPlaying) _updateAnimation();
           }
         } else {
-          if (dir.y > 0) {
-            if (_facing != Facing.down) {
-              _facing = Facing.down;
-              _updateAnimation();
-            }
-          } else {
-            if (_facing != Facing.up) {
-              _facing = Facing.up;
-              _updateAnimation();
-            }
+          final newFacing = dir.y > 0 ? Facing.down : Facing.up;
+          if (_facing != newFacing) {
+            _facing = newFacing;
+            if (!_isOneShotPlaying) _updateAnimation();
           }
         }
       } else {
-        if (_state != PlayerState.idle) {
-          _state = PlayerState.idle;
+        if (_state != PlayerAnimState.idle && !_isOneShotPlaying) {
+          _state = PlayerAnimState.idle;
           _updateAnimation();
         }
       }
     }
 
-    // Update animation
+    // Update animation ticker
     _currentTicker?.update(dt);
+
+    // Sync shadow position
+    _shadow?.position = Vector2(0, spriteSize / 2 - 4);
 
     // Sync to game state
     gameState.playerX = position.x;
     gameState.playerY = position.y;
-    onPositionChanged?.call(position);
   }
 
   @override
   void render(Canvas canvas) {
+    // Hurt flash: skip rendering on alternating intervals
+    if (_hurtTimer > 0) {
+      final flashPhase = (_hurtTimer / hurtFlashInterval).floor();
+      if (flashPhase % 2 == 0) {
+        // Render white silhouette instead
+        super.render(canvas);
+        if (_currentTicker != null) {
+          _currentTicker!.getSprite().render(
+                canvas,
+                position: Vector2(0, 0),
+                size: Vector2(spriteSize, spriteSize),
+                overridePaint: Paint()
+                  ..color = const Color(0xFFFFFFFF).withOpacity(0.8)
+                  ..filterQuality = FilterQuality.none,
+              );
+        }
+        return;
+      }
+    }
+
     super.render(canvas);
     if (_currentTicker != null) {
-      final sprite = _currentTicker!.getSprite();
-      sprite.render(
-        canvas,
-        position: Vector2(0, 0),
-        size: Vector2(32, 32),
-      );
+      _currentTicker!.getSprite().render(
+            canvas,
+            position: Vector2(0, 0),
+            size: Vector2(spriteSize, spriteSize),
+            overridePaint: pixelPaint,
+          );
     } else if (_fallbackSprite != null) {
       _fallbackSprite!.render(
         canvas,
         position: Vector2(0, 0),
-        size: Vector2(32, 32),
+        size: Vector2(spriteSize, spriteSize),
+        overridePaint: pixelPaint,
       );
     } else {
       // Fallback colored rectangle
       canvas.drawRect(
-        Rect.fromLTWH(4, 2, 24, 28),
+        Rect.fromLTWH(
+          (spriteSize - 28) / 2,
+          spriteSize - 36,
+          28,
+          32,
+        ),
         Paint()..color = const Color(0xFF4A90D9),
       );
     }
