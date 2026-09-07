@@ -1,0 +1,59 @@
+name: Build iOS IPA (unsigned)
+
+on:
+  push:
+    branches: [ main, master ]
+    tags: [ 'v*' ]
+  workflow_dispatch:
+
+jobs:
+  build-ios:
+    runs-on: macos-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.5'
+          channel: 'stable'
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build iOS IPA (unsigned, release)
+        run: |
+          flutter build ipa --release --no-codesign --verbose
+        env:
+          # Ensure no code signing is attempted
+          CODE_SIGNING_ALLOWED: NO
+          CODE_SIGNING_REQUIRED: NO
+          CODE_SIGN_IDENTITY: ""
+          PROVISIONING_PROFILE: ""
+
+      - name: List build outputs
+        run: |
+          echo "=== build/ios/ipa ==="
+          ls -la build/ios/ipa/ 2>/dev/null || echo "No ipa dir"
+          echo "=== build/ios ==="
+          find build/ios -name "*.ipa" -o -name "*.app" 2>/dev/null | head -20
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: PixelVerse_unsigned_ipa
+          path: build/ios/ipa/*.ipa
+          retention-days: 30
+
+      - name: Build Web (bonus)
+        run: flutter build web --release
+
+      - name: Upload Web artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: PixelVerse_web
+          path: build/web
+          retention-days: 30
