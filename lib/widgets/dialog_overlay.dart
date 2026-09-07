@@ -87,7 +87,7 @@ class _DialogOverlayState extends State<DialogOverlay> {
                           TextButton(
                             onPressed: widget.onClose,
                             child: const Text(
-                              'Close',
+                              '关闭',
                               style: TextStyle(color: Colors.white54),
                             ),
                           ),
@@ -107,7 +107,7 @@ class _DialogOverlayState extends State<DialogOverlay> {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 20, vertical: 8),
                             ),
-                            child: Text(isLast ? 'Done' : 'Next ▶'),
+                            child: Text(isLast ? '完成' : '下一句 ▶'),
                           ),
                         ],
                       ),

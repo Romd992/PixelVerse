@@ -77,13 +77,13 @@ class BuildingSystem {
         int? itemId;
         switch (type) {
           case BuildableTypes.chest:
-            itemId = 24; // placeholder
+            itemId = Items.chest;
             break;
           case BuildableTypes.workbench:
-            itemId = 24;
+            itemId = Items.workbench;
             break;
           case BuildableTypes.furnace:
-            itemId = 24;
+            itemId = Items.furnace;
             break;
           case BuildableTypes.torch:
             itemId = Items.torch;

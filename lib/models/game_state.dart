@@ -80,25 +80,25 @@ class GameState {
     final hour = timeOfDay.floor();
     final minute = ((timeOfDay - hour) * 60).floor();
     final h = hour % 24;
-    final period = h < 12 ? 'AM' : 'PM';
+    final period = h < 12 ? '上午' : '下午';
     final displayHour = h == 0 ? 12 : (h > 12 ? h - 12 : h);
-    return '$displayHour:${minute.toString().padLeft(2, '0')} $period';
+    return '$period $displayHour:${minute.toString().padLeft(2, '0')}';
   }
 
   String get seasonName {
     switch (season) {
       case Season.spring:
-        return 'Spring';
+        return '春季';
       case Season.summer:
-        return 'Summer';
+        return '夏季';
       case Season.autumn:
-        return 'Autumn';
+        return '秋季';
       case Season.winter:
-        return 'Winter';
+        return '冬季';
     }
   }
 
-  String get weatherName => weather == Weather.sunny ? 'Sunny' : 'Rainy';
+  String get weatherName => weather == Weather.sunny ? '晴天' : '雨天';
 
   /// Darkness factor for night overlay (0 = full day, 1 = full night).
   double get darkness {

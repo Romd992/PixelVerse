@@ -83,10 +83,10 @@ class _GameScreenState extends State<GameScreen> {
     };
     _game.onSleep = () async {
       await _game.sleepAndSave();
-      _showToast('Saved and advanced to next day!');
+      _showToast('已保存，进入新的一天！');
     };
     _game.onPlayerDeath = () {
-      _showToast('You died! Respawning at home...');
+      _showToast('你倒下了！正在家中复活...');
     };
 
     if (mounted) {
@@ -262,7 +262,7 @@ class _GameScreenState extends State<GameScreen> {
             children: [
               CircularProgressIndicator(color: Colors.white),
               SizedBox(height: 16),
-              Text('Loading PixelVerse...',
+              Text('正在加载像素谷...',
                   style: TextStyle(color: Colors.white)),
             ],
           ),
@@ -322,7 +322,7 @@ class _GameScreenState extends State<GameScreen> {
                         onAction: () => _game.handleActionButton(),
                         onInteract: () => _game.handleInteractButton(),
                         actionLabel: _getActionLabel(),
-                        interactLabel: 'Interact',
+                        interactLabel: '互动',
                       ),
                     ),
                   ],
@@ -394,7 +394,7 @@ class _GameScreenState extends State<GameScreen> {
                 onResume: () => setState(() => _showPause = false),
                 onSave: () async {
                   await SaveSystem.saveGame(_gameState);
-                  _showToast('Game saved!');
+                  _showToast('游戏已保存！');
                 },
                 onTitle: () async {
                   await SaveSystem.saveGame(_gameState);
@@ -414,21 +414,21 @@ class _GameScreenState extends State<GameScreen> {
 
   String _getActionLabel() {
     final slot = _gameState.inventory.selectedSlot;
-    if (slot.isEmpty) return 'Action';
+    if (slot.isEmpty) return '动作';
     switch (slot.itemId) {
       case Items.axe:
-        return 'Chop';
+        return '砍';
       case Items.pickaxe:
-        return 'Mine';
+        return '挖';
       case Items.sword:
-        return 'Attack';
+        return '攻击';
       case Items.hoe:
-        return 'Till';
+        return '锄地';
       case Items.wateringCan:
-        return 'Water';
+        return '浇水';
       default:
-        if (CropTypes.fromSeedId(slot.itemId) != null) return 'Plant';
-        return 'Action';
+        if (CropTypes.fromSeedId(slot.itemId) != null) return '播种';
+        return '动作';
     }
   }
 }

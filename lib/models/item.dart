@@ -29,38 +29,38 @@ class ItemDef {
 /// Central catalog of all item definitions, indexed by items.png sprite index.
 class Items {
   static const List<ItemDef> catalog = [
-    ItemDef(id: 0, name: 'Axe', category: ItemCategory.tool, maxStack: 1),
-    ItemDef(id: 1, name: 'Pickaxe', category: ItemCategory.tool, maxStack: 1),
-    ItemDef(id: 2, name: 'Sword', category: ItemCategory.tool, maxStack: 1),
-    ItemDef(id: 3, name: 'Hoe', category: ItemCategory.tool, maxStack: 1),
-    ItemDef(id: 4, name: 'Watering Can', category: ItemCategory.tool, maxStack: 1),
-    ItemDef(id: 5, name: 'Fishing Rod', category: ItemCategory.tool, maxStack: 1),
-    ItemDef(id: 6, name: 'Wood', category: ItemCategory.resource, sellPrice: 2),
-    ItemDef(id: 7, name: 'Stone', category: ItemCategory.resource, sellPrice: 3),
-    ItemDef(id: 8, name: 'Iron Ore', category: ItemCategory.resource, sellPrice: 8),
-    ItemDef(id: 9, name: 'Gold Ore', category: ItemCategory.resource, sellPrice: 20),
-    ItemDef(id: 10, name: 'Coal', category: ItemCategory.resource, sellPrice: 5),
-    ItemDef(id: 11, name: 'Wheat Seeds', category: ItemCategory.seed, sellPrice: 2),
-    ItemDef(id: 12, name: 'Carrot Seeds', category: ItemCategory.seed, sellPrice: 3),
-    ItemDef(id: 13, name: 'Potato Seeds', category: ItemCategory.seed, sellPrice: 3),
-    ItemDef(id: 14, name: 'Wheat', category: ItemCategory.crop, sellPrice: 10),
-    ItemDef(id: 15, name: 'Carrot', category: ItemCategory.crop, sellPrice: 12),
-    ItemDef(id: 16, name: 'Potato', category: ItemCategory.crop, sellPrice: 12),
-    ItemDef(id: 17, name: 'Berry', category: ItemCategory.food, sellPrice: 5),
-    ItemDef(id: 18, name: 'Bread', category: ItemCategory.food, sellPrice: 15),
-    ItemDef(id: 19, name: 'Apple', category: ItemCategory.food, sellPrice: 8),
-    ItemDef(id: 20, name: 'Fish', category: ItemCategory.food, sellPrice: 18),
-    ItemDef(id: 21, name: 'Coin', category: ItemCategory.misc, maxStack: 999),
-    ItemDef(id: 22, name: 'Iron Bar', category: ItemCategory.material, sellPrice: 25),
-    ItemDef(id: 23, name: 'Gold Bar', category: ItemCategory.material, sellPrice: 60),
-    ItemDef(id: 24, name: 'Plank', category: ItemCategory.material, sellPrice: 5, placeable: true, placeObjectType: 'plank_floor'),
-    ItemDef(id: 25, name: 'Brick', category: ItemCategory.material, sellPrice: 8),
-    ItemDef(id: 26, name: 'Glass', category: ItemCategory.material, sellPrice: 10),
-    ItemDef(id: 27, name: 'Torch', category: ItemCategory.misc, sellPrice: 4, placeable: true, placeObjectType: 'torch'),
-    ItemDef(id: 28, name: 'Flower', category: ItemCategory.misc, sellPrice: 6),
-    ItemDef(id: 29, name: 'Mushroom', category: ItemCategory.food, sellPrice: 7),
-    ItemDef(id: 30, name: 'Egg', category: ItemCategory.food, sellPrice: 9),
-    ItemDef(id: 31, name: 'Rope', category: ItemCategory.material, sellPrice: 6),
+    ItemDef(id: 0, name: '斧头', category: ItemCategory.tool, maxStack: 1),
+    ItemDef(id: 1, name: '镐子', category: ItemCategory.tool, maxStack: 1),
+    ItemDef(id: 2, name: '剑', category: ItemCategory.tool, maxStack: 1),
+    ItemDef(id: 3, name: '锄头', category: ItemCategory.tool, maxStack: 1),
+    ItemDef(id: 4, name: '水壶', category: ItemCategory.tool, maxStack: 1),
+    ItemDef(id: 5, name: '鱼竿', category: ItemCategory.tool, maxStack: 1),
+    ItemDef(id: 6, name: '木材', category: ItemCategory.resource, sellPrice: 2),
+    ItemDef(id: 7, name: '石头', category: ItemCategory.resource, sellPrice: 3),
+    ItemDef(id: 8, name: '铁矿', category: ItemCategory.resource, sellPrice: 8),
+    ItemDef(id: 9, name: '金矿', category: ItemCategory.resource, sellPrice: 20),
+    ItemDef(id: 10, name: '煤炭', category: ItemCategory.resource, sellPrice: 5),
+    ItemDef(id: 11, name: '小麦种子', category: ItemCategory.seed, sellPrice: 2),
+    ItemDef(id: 12, name: '胡萝卜种子', category: ItemCategory.seed, sellPrice: 3),
+    ItemDef(id: 13, name: '土豆种子', category: ItemCategory.seed, sellPrice: 3),
+    ItemDef(id: 14, name: '小麦', category: ItemCategory.crop, sellPrice: 10),
+    ItemDef(id: 15, name: '胡萝卜', category: ItemCategory.crop, sellPrice: 12),
+    ItemDef(id: 16, name: '土豆', category: ItemCategory.crop, sellPrice: 12),
+    ItemDef(id: 17, name: '浆果', category: ItemCategory.food, sellPrice: 5),
+    ItemDef(id: 18, name: '面包', category: ItemCategory.food, sellPrice: 15),
+    ItemDef(id: 19, name: '苹果', category: ItemCategory.food, sellPrice: 8),
+    ItemDef(id: 20, name: '鱼', category: ItemCategory.food, sellPrice: 18),
+    ItemDef(id: 21, name: '金币', category: ItemCategory.misc, maxStack: 999),
+    ItemDef(id: 22, name: '铁锭', category: ItemCategory.material, sellPrice: 25),
+    ItemDef(id: 23, name: '金锭', category: ItemCategory.material, sellPrice: 60),
+    ItemDef(id: 24, name: '木板', category: ItemCategory.material, sellPrice: 5, placeable: true, placeObjectType: 'plank_floor'),
+    ItemDef(id: 25, name: '砖块', category: ItemCategory.material, sellPrice: 8),
+    ItemDef(id: 26, name: '玻璃', category: ItemCategory.material, sellPrice: 10),
+    ItemDef(id: 27, name: '火把', category: ItemCategory.misc, sellPrice: 4, placeable: true, placeObjectType: 'torch'),
+    ItemDef(id: 28, name: '花', category: ItemCategory.misc, sellPrice: 6),
+    ItemDef(id: 29, name: '箱子', category: ItemCategory.misc, sellPrice: 20, placeable: true, placeObjectType: 'chest'),
+    ItemDef(id: 30, name: '工作台', category: ItemCategory.misc, sellPrice: 15, placeable: true, placeObjectType: 'workbench'),
+    ItemDef(id: 31, name: '炉子', category: ItemCategory.misc, sellPrice: 25, placeable: true, placeObjectType: 'furnace'),
   ];
 
   static ItemDef getById(int id) => catalog[id];
@@ -87,4 +87,7 @@ class Items {
   static const int goldBar = 23;
   static const int plank = 24;
   static const int torch = 27;
+  static const int chest = 29;
+  static const int workbench = 30;
+  static const int furnace = 31;
 }

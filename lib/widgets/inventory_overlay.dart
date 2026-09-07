@@ -49,7 +49,7 @@ class InventoryOverlay extends StatelessWidget {
             const SizedBox(height: 12),
             // Hotbar row
             const Text(
-              'Hotbar',
+              '快捷栏',
               style: TextStyle(color: Colors.white70, fontSize: 12),
             ),
             const SizedBox(height: 4),
@@ -57,7 +57,7 @@ class InventoryOverlay extends StatelessWidget {
             const SizedBox(height: 16),
             // Backpack
             const Text(
-              'Backpack',
+              '背包',
               style: TextStyle(color: Colors.white70, fontSize: 12),
             ),
             const SizedBox(height: 4),
@@ -150,7 +150,7 @@ class InventoryOverlay extends StatelessWidget {
           ),
           const SizedBox(height: 2),
           Text(
-            '${def.category.name} • Sell: ${def.sellPrice}g',
+            '${_categoryName(def.category)} • 售价: ${def.sellPrice}金币',
             style: const TextStyle(color: Colors.white70, fontSize: 12),
           ),
         ],
@@ -193,5 +193,24 @@ class InventoryOverlay extends StatelessWidget {
         break;
     }
     return Icon(icon, color: color, size: 28);
+  }
+
+  String _categoryName(ItemCategory cat) {
+    switch (cat) {
+      case ItemCategory.tool:
+        return '工具';
+      case ItemCategory.resource:
+        return '资源';
+      case ItemCategory.seed:
+        return '种子';
+      case ItemCategory.crop:
+        return '作物';
+      case ItemCategory.food:
+        return '食物';
+      case ItemCategory.material:
+        return '材料';
+      case ItemCategory.misc:
+        return '其他';
+    }
   }
 }

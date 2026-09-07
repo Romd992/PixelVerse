@@ -69,7 +69,7 @@ class _ShopOverlayState extends State<ShopOverlay> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  "Pierre's General Store",
+                  '皮埃尔杂货店',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 20,
@@ -81,7 +81,7 @@ class _ShopOverlayState extends State<ShopOverlay> {
                     const Icon(Icons.monetization_on, color: Colors.amber),
                     const SizedBox(width: 4),
                     Text(
-                      '${widget.gameState.coins}g',
+                      '${widget.gameState.coins}金币',
                       style: const TextStyle(
                         color: Colors.amber,
                         fontSize: 16,
@@ -108,7 +108,7 @@ class _ShopOverlayState extends State<ShopOverlay> {
                       backgroundColor:
                           _buyMode ? Colors.blue : Colors.grey[700],
                     ),
-                    child: const Text('Buy'),
+                    child: const Text('购买'),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -119,7 +119,7 @@ class _ShopOverlayState extends State<ShopOverlay> {
                       backgroundColor:
                           !_buyMode ? Colors.orange : Colors.grey[700],
                     ),
-                    child: const Text('Sell'),
+                    child: const Text('出售'),
                   ),
                 ),
               ],
@@ -160,7 +160,7 @@ class _ShopOverlayState extends State<ShopOverlay> {
                 ),
               ),
               Text(
-                '${item.buyPrice}g',
+                '${item.buyPrice}金币',
                 style: TextStyle(
                   color: canAfford ? Colors.amber : Colors.red,
                   fontSize: 14,
@@ -182,7 +182,7 @@ class _ShopOverlayState extends State<ShopOverlay> {
                   padding: const EdgeInsets.symmetric(
                       horizontal: 14, vertical: 6),
                 ),
-                child: const Text('Buy'),
+                child: const Text('购买'),
               ),
             ],
           ),
@@ -203,7 +203,7 @@ class _ShopOverlayState extends State<ShopOverlay> {
     if (sellable.isEmpty) {
       return const Center(
         child: Text(
-          'No sellable items',
+          '没有可出售的物品',
           style: TextStyle(color: Colors.white54),
         ),
       );
@@ -233,7 +233,7 @@ class _ShopOverlayState extends State<ShopOverlay> {
                 ),
               ),
               Text(
-                '${def.sellPrice}g each',
+                '${def.sellPrice}金币/个',
                 style: const TextStyle(
                     color: Colors.amber, fontSize: 12),
               ),
@@ -250,7 +250,7 @@ class _ShopOverlayState extends State<ShopOverlay> {
                   padding: const EdgeInsets.symmetric(
                       horizontal: 14, vertical: 6),
                 ),
-                child: const Text('Sell 1'),
+                child: const Text('出售1个'),
               ),
             ],
           ),

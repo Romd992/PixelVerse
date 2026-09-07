@@ -44,7 +44,7 @@ class _CraftingOverlayState extends State<CraftingOverlay> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  widget.station == 'furnace' ? 'Furnace' : 'Workbench',
+                  widget.station == 'furnace' ? '炉子' : '工作台',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 22,
@@ -138,7 +138,7 @@ class _CraftingOverlayState extends State<CraftingOverlay> {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 16, vertical: 8),
                           ),
-                          child: const Text('Craft'),
+                          child: const Text('制作'),
                         ),
                       ],
                     ),

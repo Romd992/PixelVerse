@@ -30,7 +30,7 @@ class PauseOverlay extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               const Text(
-                'Paused',
+                '游戏暂停',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 28,
@@ -38,11 +38,11 @@ class PauseOverlay extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 24),
-              _buildMenuButton('Resume', Icons.play_arrow, onResume),
+              _buildMenuButton('继续游戏', Icons.play_arrow, onResume),
               const SizedBox(height: 12),
-              _buildMenuButton('Save Game', Icons.save, onSave),
+              _buildMenuButton('保存游戏', Icons.save, onSave),
               const SizedBox(height: 12),
-              _buildMenuButton('Return to Title', Icons.home, onTitle),
+              _buildMenuButton('返回主菜单', Icons.home, onTitle),
             ],
           ),
         ),

@@ -69,12 +69,12 @@ class _TitleScreenState extends State<TitleScreen> {
                 children: [
                   // Game title
                   const Text(
-                    'PixelVerse',
+                    '像素谷',
                     style: TextStyle(
                       fontSize: 64,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
-                      letterSpacing: 4,
+                      letterSpacing: 8,
                       shadows: [
                         Shadow(
                           color: Colors.black54,
@@ -86,7 +86,7 @@ class _TitleScreenState extends State<TitleScreen> {
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    'A Sandbox Survival Adventure',
+                    '沙盒生存建造冒险',
                     style: TextStyle(
                       fontSize: 18,
                       color: Colors.white70,
@@ -99,7 +99,7 @@ class _TitleScreenState extends State<TitleScreen> {
                     const CircularProgressIndicator(color: Colors.white)
                   else ...[
                     _buildMenuButton(
-                      'New Game',
+                      '开始新游戏',
                       Icons.nature,
                       Colors.green,
                       _startNewGame,
@@ -107,20 +107,20 @@ class _TitleScreenState extends State<TitleScreen> {
                     const SizedBox(height: 16),
                     if (_hasSave)
                       _buildMenuButton(
-                        'Continue',
+                        '继续游戏',
                         Icons.play_arrow,
                         Colors.blue,
                         _continueGame,
                       ),
                     if (_hasSave) const SizedBox(height: 16),
                     _buildMenuButton(
-                      'Settings',
+                      '设置',
                       Icons.settings,
                       Colors.grey,
                       () {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                              content: Text('Settings coming soon!')),
+                              content: Text('设置功能即将推出！')),
                         );
                       },
                     ),

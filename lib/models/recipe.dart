@@ -25,7 +25,7 @@ class Recipes {
     // Workbench recipes
     Recipe(
       id: 'plank',
-      name: 'Plank',
+      name: '木板',
       resultItemId: Items.plank,
       resultCount: 4,
       ingredients: {Items.wood: 1},
@@ -33,28 +33,28 @@ class Recipes {
     ),
     Recipe(
       id: 'stone_axe',
-      name: 'Stone Axe',
+      name: '石斧',
       resultItemId: Items.axe,
       ingredients: {Items.wood: 2, Items.stone: 3},
       station: 'workbench',
     ),
     Recipe(
       id: 'stone_pick',
-      name: 'Stone Pickaxe',
+      name: '石镐',
       resultItemId: Items.pickaxe,
       ingredients: {Items.wood: 2, Items.stone: 3},
       station: 'workbench',
     ),
     Recipe(
       id: 'stone_sword',
-      name: 'Stone Sword',
+      name: '石剑',
       resultItemId: Items.sword,
       ingredients: {Items.wood: 1, Items.stone: 2},
       station: 'workbench',
     ),
     Recipe(
       id: 'torch',
-      name: 'Torch',
+      name: '火把',
       resultItemId: Items.torch,
       resultCount: 4,
       ingredients: {Items.wood: 1, Items.coal: 1},
@@ -62,43 +62,43 @@ class Recipes {
     ),
     Recipe(
       id: 'chest_item',
-      name: 'Chest',
-      resultItemId: 24, // placeholder, chest handled as placed object
+      name: '箱子',
+      resultItemId: Items.chest,
       ingredients: {Items.plank: 8},
       station: 'workbench',
     ),
     Recipe(
       id: 'furnace_item',
-      name: 'Furnace',
-      resultItemId: 24, // placeholder
+      name: '炉子',
+      resultItemId: Items.furnace,
       ingredients: {Items.stone: 8},
       station: 'workbench',
     ),
     Recipe(
       id: 'workbench_item',
-      name: 'Workbench',
-      resultItemId: 24, // placeholder
+      name: '工作台',
+      resultItemId: Items.workbench,
       ingredients: {Items.plank: 4},
       station: 'hand',
     ),
     // Furnace smelting recipes
     Recipe(
       id: 'iron_bar',
-      name: 'Iron Bar',
+      name: '铁锭',
       resultItemId: Items.ironBar,
       ingredients: {Items.ironOre: 1, Items.coal: 1},
       station: 'furnace',
     ),
     Recipe(
       id: 'gold_bar',
-      name: 'Gold Bar',
+      name: '金锭',
       resultItemId: Items.goldBar,
       ingredients: {Items.goldOre: 1, Items.coal: 2},
       station: 'furnace',
     ),
     Recipe(
       id: 'brick',
-      name: 'Brick',
+      name: '砖块',
       resultItemId: 25,
       ingredients: {Items.stone: 2, Items.coal: 1},
       station: 'furnace',

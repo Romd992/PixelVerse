@@ -170,7 +170,7 @@ class PixelVerseGame extends FlameGame with HasCollisionDetection {
       final itemsImg = await images.load('items.png');
       final itemsSheet = SpriteSheet(
         image: itemsImg,
-        srcSize: Vector2(16, 16),
+        srcSize: Vector2(32, 32),
       );
       for (int i = 0; i < 32; i++) {
         itemSprites[i] = itemsSheet.getSprite(i ~/ 8, i % 8);
@@ -410,7 +410,7 @@ class PixelVerseGame extends FlameGame with HasCollisionDetection {
       sprite: null,
       destructible: false,
       interactive: true,
-      label: 'Mine Entrance',
+      label: '矿洞入口',
     );
 
     // Place trees
@@ -672,8 +672,8 @@ class PixelVerseGame extends FlameGame with HasCollisionDetection {
           case WorldObjectType.shop:
             // Just show message
             onShowMessage?.call(obj.type == WorldObjectType.shop
-                ? 'Talk to the shopkeeper inside'
-                : 'Your home');
+                ? '进去和店主打个招呼吧'
+                : '这是你的家');
             return;
           default:
             break;
@@ -728,6 +728,11 @@ class PixelVerseGame extends FlameGame with HasCollisionDetection {
         }
         return;
       }
+      // Fishing: use fishing rod near water
+      if (selected.itemId == 5) {
+        _tryFishing(interactPos);
+        return;
+      }
     }
 
     // Harvest mature crops
@@ -745,16 +750,16 @@ class PixelVerseGame extends FlameGame with HasCollisionDetection {
       if (dx * dx + dy * dy < 56 * 56) {
         if (obj.type == WorldObjectType.tree &&
             (selected.isEmpty || selected.itemId != Items.axe)) {
-          onShowMessage?.call('Equip an axe to chop trees');
+          onShowMessage?.call('装备斧头才能砍树');
           return;
         }
         if (obj.type == WorldObjectType.rock &&
             (selected.isEmpty || selected.itemId != Items.pickaxe)) {
-          onShowMessage?.call('Equip a pickaxe to mine rocks');
+          onShowMessage?.call('装备镐子才能挖矿');
           return;
         }
         if (gameState.energy < 5) {
-          onShowMessage?.call('Not enough energy!');
+          onShowMessage?.call('体力不足！');
           return;
         }
         gameState.energy -= 5;
@@ -785,10 +790,47 @@ class PixelVerseGame extends FlameGame with HasCollisionDetection {
         _rebuildPlacedObjects();
         onStateChanged?.call();
       } else {
-        onShowMessage?.call('Cannot place here');
+        onShowMessage?.call('这里无法放置');
       }
       return;
     }
+  }
+
+  /// Try fishing at the given position (near water).
+  void _tryFishing(Vector2 pos) {
+    if (gameState.energy < 3) {
+      onShowMessage?.call('体力不足！');
+      return;
+    }
+    // Check if near water tile
+    final tx = (pos.x / 32).floor();
+    final ty = (pos.y / 32).floor();
+    bool nearWater = false;
+    if (worldMap != null) {
+      for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+          if (worldMap!.getTile(tx + dx, ty + dy) == 4) {
+            nearWater = true;
+            break;
+          }
+        }
+        if (nearWater) break;
+      }
+    }
+    if (!nearWater) {
+      onShowMessage?.call('需要靠近水源才能钓鱼');
+      return;
+    }
+    gameState.energy -= 3;
+    // 60% chance to catch a fish
+    final rand = DateTime.now().millisecond;
+    if (rand % 10 < 6) {
+      _spawnDrops(pos, [20]); // fish
+      onShowMessage?.call('钓到了一条鱼！');
+    } else {
+      onShowMessage?.call('什么也没钓到...');
+    }
+    onStateChanged?.call();
   }
 
   void _performSwordAttack() {
@@ -865,7 +907,7 @@ class PixelVerseGame extends FlameGame with HasCollisionDetection {
 
     // Move player to mine entrance
     player!.position = Vector2(960, 960);
-    onShowMessage?.call('Entered the mine');
+    onShowMessage?.call('进入矿洞');
   }
 
   void exitMine() {
@@ -897,7 +939,7 @@ class PixelVerseGame extends FlameGame with HasCollisionDetection {
 
     // Move player back to mine entrance position
     player!.position = Vector2(400, 1300);
-    onShowMessage?.call('Left the mine');
+    onShowMessage?.call('离开矿洞');
   }
 
   void _loadMineScene() {
@@ -949,7 +991,7 @@ class PixelVerseGame extends FlameGame with HasCollisionDetection {
       sprite: null,
       destructible: false,
       interactive: true,
-      label: 'Exit Mine',
+      label: '离开矿洞',
     );
     exit.onInteract = (o) => exitMine();
 
@@ -997,11 +1039,11 @@ class PixelVerseGame extends FlameGame with HasCollisionDetection {
     gameState.playerX = 896;
     gameState.playerY = 960;
     onStateChanged?.call();
-    onShowMessage?.call('Day ${gameState.day} - ${gameState.seasonName}');
+    onShowMessage?.call('第${gameState.day}天 - ${gameState.seasonName}');
   }
 
   void _handleBedtime() {
-    onShowMessage?.call('You passed out! Sleep to recover.');
+    onShowMessage?.call('你体力不支昏倒了！快回家睡觉恢复。');
     // Auto-save and advance
     sleepAndSave();
   }
